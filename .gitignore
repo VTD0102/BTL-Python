@@ -135,7 +135,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-
+# PyCharm / IntelliJ IDEA project settings
+.idea/
+*.iml
 # Spyder project settings
 .spyderproject
 .spyproject
