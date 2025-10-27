@@ -4,4 +4,3 @@ def Create_Table():
     Connect=sqlite3.connect(DB_PATH)
     cur =Connect.cursor()
 
-dddddddddddddddddddddss
