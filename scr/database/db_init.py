@@ -1,6 +1,6 @@
 import sqlite3
 import os
-DB_PATH = os.path.join("data", "starts.db")
+DB_PATH = os.path.join("data", "stats.db")
 
 def create_connection():
     if not os.path.exists("data"):
