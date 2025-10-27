@@ -16,8 +16,8 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 try:
-    from scr.database.db_init import create_tables
-    from scr.database.db_utils import save_player_stats_to_db
+    from src.database.db_init import create_tables
+    from src.database.db_utils import save_player_stats_to_db
 except ModuleNotFoundError:
     print("Lỗi: Không tìm thấy module 'src.database'.")
     print("Hãy đảm bảo bạn đang chạy script này từ thư mục gốc (BTL-Python)")

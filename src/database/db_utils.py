@@ -13,7 +13,7 @@ except ImportError:
     if project_root not in sys.path:
         sys.path.append(project_root)
     # SỬA Ở ĐÂY: Thêm 'src.'
-    from scr.database.db_init import DB_PATH, create_connection
+    from src.database.db_init import DB_PATH, create_connection
 
 # --- (Hàm save_player_stats_to_db giữ nguyên như cũ) ---
 def save_player_stats_to_db(df_stats):
