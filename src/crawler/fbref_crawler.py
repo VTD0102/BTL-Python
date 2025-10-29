@@ -11,20 +11,20 @@ import time
 import sys
 import os
 
-
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
 try:
+    # Đã sửa lỗi gõ máy 'scr' -> 'src'
     from src.database.db_init import create_tables
     from src.database.db_utils import save_player_stats_to_db
 except ModuleNotFoundError:
-    print("error: Không tìm thấy module 'scr.database'.")
-    print("Hãy chạy script này từ thư mục gốc (BTL-Python).")
-    print("Và đảm bảo có file '__init__.py' trong mỗi thư mục con.")
+    print("Lỗi: Không tìm thấy module 'src.database'.")
+    print("Hãy đảm bảo bạn đang chạy script này từ thư mục gốc (BTL-Python)")
+    print("Và đảm bảo các file __init__.py đã tồn tại.")
     sys.exit(1)
-
+# Khối 'except' thừa đã bị xóa
 
 # ===================== Ánh xạ cột =====================
 COLUMN_MAPPING = {
@@ -64,11 +64,11 @@ COLUMN_MAPPING = {
     'Per 90 Minutes_npxG+xAG': 'npxG_plus_xAG_per90',
 }
 
-
 # ===================== Hàm xử lý header phức tạp =====================
 def flatten_fbref_headers(df):
     """
     Ghép 2 hàng tiêu đề của bảng FBref thành 1.
+    (Chỉ giữ lại 1 phiên bản của hàm này)
     """
     if isinstance(df.columns, pd.MultiIndex):
         new_cols = []
@@ -81,19 +81,21 @@ def flatten_fbref_headers(df):
     df = df[df['Player'] != 'Player'].reset_index(drop=True)
     return df
 
-
 # ===================== Hàm cào dữ liệu chính =====================
 def scrape_fbref_stats(season_url: str):
-    print("Đang khởi tạo trình duyệt Chrome Stealth...")
+    """
+    (Chỉ giữ lại 1 phiên bản của hàm này,
+    sử dụng phiên bản 'headless' nâng cao)
+    """
+    print("Đang khởi tạo trình duyệt Chrome Stealth (chế độ ẩn)...")
     service = Service(ChromeDriverManager().install())
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")  # không cần bật GUI
+    options.add_argument("--headless=new")  # Chạy ở chế độ ẩn
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("window-size=1920,1080")
 
     driver = webdriver.Chrome(service=service, options=options)
 
-    # Cấu hình Selenium Stealth
     stealth(driver,
             languages=["en-US", "en"],
             vendor="Google Inc.",
@@ -111,55 +113,76 @@ def scrape_fbref_stats(season_url: str):
             WebDriverWait(driver, 5).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "iframe[title='reCAPTCHA']"))
             )
-            print("PHÁT HIỆN CAPTCHA! Vui lòng giải thủ công trong 30 giây...")
-            time.sleep(30)
+            print("!!! PHÁT HIỆN CAPTCHA !!!")
+            print("Không thể tự giải CAPTCHA ở chế độ ẩn. Vui lòng tắt headless và chạy lại nếu cần.")
+            # Nếu chạy ở chế độ ẩn, chúng ta không thể giải, nên thoát
+            return 
         except:
             print("Không phát hiện CAPTCHA, tiếp tục...")
 
         # Chấp nhận cookie (nếu có)
         try:
             wait = WebDriverWait(driver, 5)
-            accept_btn = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Accept All')]")))
-            accept_btn.click()
-            print("Đã chấp nhận cookie banner.")
+            accept_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Accept All')]")))
+            accept_button.click()
+            print("Đã đồng ý cookie.")
             time.sleep(1)
-        except:
-            pass
+        except Exception as e:
+            print("Không tìm thấy banner cookie.")
 
         # Chờ bảng chính hiển thị
-        print("Đang chờ bảng 'stats_standard' tải...")
-        table = WebDriverWait(driver, 15).until(
-            EC.presence_of_element_located((By.ID, "stats_standard"))
-        )
+        table_id = "stats_standard"
+        wait = WebDriverWait(driver, 20)
+        print(f"Đang chờ bảng '{table_id}' tải...")
+        table_element = wait.until(EC.presence_of_element_located((By.ID, table_id)))
+        
+        driver.execute_script("window.scrollTo(0, arguments[0].offsetTop - 200);", table_element)
         time.sleep(2)
 
-        html = table.get_attribute('outerHTML')
-        df = pd.read_html(StringIO(html))[0]
+        print("Đang đọc dữ liệu từ bảng HTML...")
+        table_html = table_element.get_attribute('outerHTML')
+        
+        df = pd.read_html(StringIO(table_html))[0]
+
+        print("Đang xử lý dữ liệu...")
+        
         df = flatten_fbref_headers(df)
 
         # Chuyển kiểu dữ liệu
-        for col in df.columns:
+        fbref_cols_to_process = list(COLUMN_MAPPING.keys())
+        for col in fbref_cols_to_process:
+            if col not in df.columns:
+                print(f"Cảnh báo: Cột {col} không tìm thấy trong FBref, sẽ bỏ qua.")
+                continue
             if col not in ['Player', 'Nation', 'Pos', 'Squad', 'Age']:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
-
+        
         # Lọc cầu thủ > 90 phút
-        df = df[df['Playing Time_Min'] > 90].copy()
-        print(f"Thu thập được {len(df)} cầu thủ có > 90 phút thi đấu.")
+        df_filtered = df[df['Playing Time_Min'] > 90].copy()
+        
+        if df_filtered.empty:
+            print("Không tìm thấy cầu thủ nào có > 90 phút thi đấu.")
+            return
+
+        print(f"Thu thập được {len(df_filtered)} cầu thủ có > 90 phút thi đấu.")
 
         # Giữ các cột hợp lệ
-        valid_cols = [c for c in COLUMN_MAPPING.keys() if c in df.columns]
-        df = df[valid_cols].rename(columns=COLUMN_MAPPING)
+        valid_fbref_cols = [col for col in COLUMN_MAPPING.keys() if col in df.columns]
+        df_to_save = df_filtered[valid_fbref_cols].copy()
 
+        df_to_save.rename(columns=COLUMN_MAPPING, inplace=True)
+        
         # Điền giá trị thiếu
-        df.fillna(pd.NA, inplace=True)
-        # Ghi vào database
-        print("Ghi dữ liệu vào SQLite...")
-        save_player_stats_to_db(df)
+        df_to_save.fillna(pd.NA, inplace=True)
 
-        print("Hoàn thành bước I.1: Thu thập dữ liệu cầu thủ Premier League!")
+        # Ghi vào database
+        print("\nChuẩn bị lưu dữ liệu vào CSDL...")
+        save_player_stats_to_db(df_to_save)
+        
+        print(f"--- Hoàn thành I.1! ---")
 
     except Exception as e:
-        print(f"Lỗi khi thu thập dữ liệu: {e}")
+        print(f"Đã xảy ra lỗi trong quá trình thu thập dữ liệu: {e}")
     finally:
         print("Đóng trình duyệt.")
         driver.quit()
@@ -167,9 +190,13 @@ def scrape_fbref_stats(season_url: str):
 
 # ===================== Chạy chính =====================
 if __name__ == "__main__":
-    print("Khởi tạo CSDL (nếu chưa có)...")
+    # Chỉ giữ lại 1 khối __name__
+    print("--- Bước 1: Khởi tạo CSDL (nếu chưa có) ---")
     create_tables()
-
+    
+    # Sử dụng URL 2024-2025 cụ thể
     URL = "https://fbref.com/en/comps/9/2024-2025/stats/2024-2025-Premier-League-Stats"
-    print("\nBắt đầu thu thập dữ liệu FBref...\n")
-    scrape_fbref_stats(URL)
+    
+    print("\n--- Bước 2: Bắt đầu cào dữ liệu ---")
+    scrape_fbref_stats(season_url=URL)
+

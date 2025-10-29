@@ -1,5 +1,6 @@
 import sqlite3
 import os
+DB_PATH = os.path.join("data", "stats.db")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -55,11 +56,10 @@ def create_tables():
             xAG_per90 REAL,
             xG_plus_xAG_per90 REAL,
             npxG_per90 REAL,
-            npxG_plus_xAG_per90 REAL,
-            
-            matches_url TEXT
+            npxG_plus_xAG_per90 REAL
         );
-    """)            
+    """)
+
     cur.execute("""
         CREATE TABLE IF NOT EXISTS transfer_values (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,8 +68,7 @@ def create_tables():
             market_value TEXT,
             position TEXT,
             age INTEGER,
-            nationality TEXT,
-            source_url TEXT
+            nationality TEXT
         );
     """)
 

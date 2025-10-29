@@ -1,18 +1,27 @@
 import sqlite3
 import pandas as pd
-import os
 import sys
+import os
+
+# Import đường dẫn CSDL và hàm kết nối từ file db_init.py
+try:
+    # SỬA Ở ĐÂY: Thêm dấu chấm
+    from .db_init import DB_PATH, create_connection
+except ImportError:
+    # Xử lý nếu chạy file này độc lập (thêm thư mục gốc vào path)
+    import sys
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    if project_root not in sys.path:
+        sys.path.append(project_root)
+    # SỬA Ở ĐÂY: Thêm 'src.'
+    from src.database.db_init import DB_PATH, create_connection
+
+
 
 # =========================================
 # 1️⃣Đảm bảo import đúng (kể cả chạy trực tiếp)
 # =========================================
-try:
-    from .db_init import DB_PATH, create_connection
-except ImportError:
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    if project_root not in sys.path:
-        sys.path.append(project_root)
-    from src.database.db_init import DB_PATH, create_connection
+
 
 
 def save_player_stats_to_db(df_stats: pd.DataFrame):
@@ -32,12 +41,6 @@ def save_player_stats_to_db(df_stats: pd.DataFrame):
         cur.execute("DELETE FROM player_stats")
         print("Đã xóa dữ liệu cũ từ bảng 'player_stats'.")
 
-        # Lọc bỏ các cột không hợp lệ (ví dụ matches_url, Matches, Unnamed)
-        drop_cols = [c for c in df_stats.columns if 'url' in c.lower() or 'unnamed' in c.lower()]
-        if drop_cols:
-            df_stats = df_stats.drop(columns=drop_cols, errors="ignore")
-            print(f"Đã loại bỏ {len(drop_cols)} cột không có trong DB: {drop_cols}")
-
         df_to_save = df_stats.where(pd.notnull(df_stats), None)
         cols = df_to_save.columns.tolist()
         col_names = ", ".join([f'"{c}"' for c in cols])
@@ -45,7 +48,6 @@ def save_player_stats_to_db(df_stats: pd.DataFrame):
         sql = f"INSERT INTO player_stats ({col_names}) VALUES ({placeholders})"
         data_tuples = [tuple(row) for row in df_to_save.itertuples(index=False)]
 
-        #  Ghi dữ liệu
         cur.executemany(sql, data_tuples)
         conn.commit()
         print(f"Đã lưu thành công {len(data_tuples)} cầu thủ vào bảng 'player_stats'.")
@@ -68,15 +70,6 @@ def save_player_stats_to_db(df_stats: pd.DataFrame):
 # 3️⃣ TEST NHANH
 # =========================================
 if __name__ == "__main__":
-    print("Kiểm tra hàm save_player_stats_to_db()")
-    sample_data = {
-        "player_name": ["Haaland", "Saka"],
-        "club": ["Man City", "Arsenal"],
-        "minutes": [2450, 2100],
-        "goals": [27, 16],
-        "assists": [5, 9],
-        "goals_per90": [1.05, 0.47],
-        "matches_url": ["fbref.com/players/123", "fbref.com/players/456"]
-    }
+    
     df = pd.DataFrame(sample_data)
     save_player_stats_to_db(df)
