@@ -8,7 +8,7 @@ DB_PATH = os.path.join(DATA_DIR, "stats.db")
 def create_connection():
     """Tạo kết nối đến SQLite DB."""
     os.makedirs(DATA_DIR, exist_ok=True)
-    print(f"📁 Database path: {DB_PATH}")
+    print(f"Database path: {DB_PATH}")
     return sqlite3.connect(DB_PATH)
 
 def create_tables():
@@ -54,8 +54,7 @@ def create_tables():
             npxG_plus_xAG_per90 REAL,
             matches_url TEXT
         );
-    """)
-
+    """)            
     cur.execute("""
         CREATE TABLE IF NOT EXISTS transfer_values (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -11,7 +11,7 @@ import time
 import sys
 import os
 
-# ===================== Cấu hình đường dẫn dự án =====================
+
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 if project_root not in sys.path:
     sys.path.append(project_root)
@@ -20,8 +20,8 @@ try:
     from src.database.db_init import create_tables
     from src.database.db_utils import save_player_stats_to_db
 except ModuleNotFoundError:
-    print("❌ Lỗi: Không tìm thấy module 'scr.database'.")
-    print("👉 Hãy chạy script này từ thư mục gốc (BTL-Python).")
+    print("error: Không tìm thấy module 'scr.database'.")
+    print("Hãy chạy script này từ thư mục gốc (BTL-Python).")
     print("Và đảm bảo có file '__init__.py' trong mỗi thư mục con.")
     sys.exit(1)
 
@@ -84,7 +84,7 @@ def flatten_fbref_headers(df):
 
 # ===================== Hàm cào dữ liệu chính =====================
 def scrape_fbref_stats(season_url: str):
-    print("🚀 Đang khởi tạo trình duyệt Chrome Stealth...")
+    print("Đang khởi tạo trình duyệt Chrome Stealth...")
     service = Service(ChromeDriverManager().install())
     options = webdriver.ChromeOptions()
     options.add_argument("--headless=new")  # không cần bật GUI
@@ -103,7 +103,7 @@ def scrape_fbref_stats(season_url: str):
             fix_hairline=True)
 
     try:
-        print(f"🌐 Truy cập: {season_url}")
+        print(f"Truy cập: {season_url}")
         driver.get(season_url)
 
         # Kiểm tra CAPTCHA
@@ -111,23 +111,23 @@ def scrape_fbref_stats(season_url: str):
             WebDriverWait(driver, 5).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "iframe[title='reCAPTCHA']"))
             )
-            print("⚠️ PHÁT HIỆN CAPTCHA! Vui lòng giải thủ công trong 30 giây...")
+            print("PHÁT HIỆN CAPTCHA! Vui lòng giải thủ công trong 30 giây...")
             time.sleep(30)
         except:
-            print("✅ Không phát hiện CAPTCHA, tiếp tục...")
+            print("Không phát hiện CAPTCHA, tiếp tục...")
 
         # Chấp nhận cookie (nếu có)
         try:
             wait = WebDriverWait(driver, 5)
             accept_btn = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Accept All')]")))
             accept_btn.click()
-            print("🍪 Đã chấp nhận cookie banner.")
+            print("Đã chấp nhận cookie banner.")
             time.sleep(1)
         except:
             pass
 
         # Chờ bảng chính hiển thị
-        print("⏳ Đang chờ bảng 'stats_standard' tải...")
+        print("Đang chờ bảng 'stats_standard' tải...")
         table = WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.ID, "stats_standard"))
         )
@@ -144,7 +144,7 @@ def scrape_fbref_stats(season_url: str):
 
         # Lọc cầu thủ > 90 phút
         df = df[df['Playing Time_Min'] > 90].copy()
-        print(f"✅ Thu thập được {len(df)} cầu thủ có > 90 phút thi đấu.")
+        print(f"Thu thập được {len(df)} cầu thủ có > 90 phút thi đấu.")
 
         # Giữ các cột hợp lệ
         valid_cols = [c for c in COLUMN_MAPPING.keys() if c in df.columns]
@@ -154,23 +154,23 @@ def scrape_fbref_stats(season_url: str):
         df.fillna(pd.NA, inplace=True)
 
         # Ghi vào database
-        print("💾 Ghi dữ liệu vào SQLite...")
+        print("Ghi dữ liệu vào SQLite...")
         save_player_stats_to_db(df)
 
-        print("🎉 Hoàn thành bước I.1: Thu thập dữ liệu cầu thủ Premier League!")
+        print("Hoàn thành bước I.1: Thu thập dữ liệu cầu thủ Premier League!")
 
     except Exception as e:
-        print(f"❌ Lỗi khi thu thập dữ liệu: {e}")
+        print(f"Lỗi khi thu thập dữ liệu: {e}")
     finally:
-        print("🛑 Đóng trình duyệt.")
+        print("Đóng trình duyệt.")
         driver.quit()
 
 
 # ===================== Chạy chính =====================
 if __name__ == "__main__":
-    print("📦 Khởi tạo CSDL (nếu chưa có)...")
+    print("Khởi tạo CSDL (nếu chưa có)...")
     create_tables()
 
-    URL = "https://fbref.com/en/comps/9/stats/Premier-League-Stats"
-    print("\n⚽ Bắt đầu thu thập dữ liệu FBref...\n")
+    URL = "https://fbref.com/en/comps/9/2024-2025/stats/2024-2025-Premier-League-Stats"
+    print("\nBắt đầu thu thập dữ liệu FBref...\n")
     scrape_fbref_stats(URL)
