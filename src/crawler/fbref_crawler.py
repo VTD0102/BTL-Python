@@ -16,6 +16,7 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 try:
+    # Đã sửa lỗi gõ máy 'scr' -> 'src'
     from src.database.db_init import create_tables
     from src.database.db_utils import save_player_stats_to_db
 except ModuleNotFoundError:
@@ -23,7 +24,9 @@ except ModuleNotFoundError:
     print("Hãy đảm bảo bạn đang chạy script này từ thư mục gốc (BTL-Python)")
     print("Và đảm bảo các file __init__.py đã tồn tại.")
     sys.exit(1)
+# Khối 'except' thừa đã bị xóa
 
+# ===================== Ánh xạ cột =====================
 COLUMN_MAPPING = {
     'Player': 'player_name',
     'Nation': 'nation',
@@ -61,46 +64,63 @@ COLUMN_MAPPING = {
     'Per 90 Minutes_npxG+xAG': 'npxG_plus_xAG_per90',
 }
 
+# ===================== Hàm xử lý header phức tạp =====================
 def flatten_fbref_headers(df):
-    new_cols = []
-    for col in df.columns:
-        if "Unnamed" in col[0]:
-            new_cols.append(col[1])
-        else:
-            new_cols.append(f"{col[0]}_{col[1]}")
-    df.columns = new_cols
+    """
+    Ghép 2 hàng tiêu đề của bảng FBref thành 1.
+    (Chỉ giữ lại 1 phiên bản của hàm này)
+    """
+    if isinstance(df.columns, pd.MultiIndex):
+        new_cols = []
+        for col in df.columns:
+            if "Unnamed" in col[0]:
+                new_cols.append(col[1])
+            else:
+                new_cols.append(f"{col[0]}_{col[1]}")
+        df.columns = new_cols
     df = df[df['Player'] != 'Player'].reset_index(drop=True)
     return df
 
-def scrape_fbref_stats(season_url):
-    print("Đang khởi tạo trình duyệt (Selenium Stealth)...")
+# ===================== Hàm cào dữ liệu chính =====================
+def scrape_fbref_stats(season_url: str):
+    """
+    (Chỉ giữ lại 1 phiên bản của hàm này,
+    sử dụng phiên bản 'headless' nâng cao)
+    """
+    print("Đang khởi tạo trình duyệt Chrome Stealth (chế độ ẩn)...")
     service = Service(ChromeDriverManager().install())
     options = webdriver.ChromeOptions()
-    
-    options.add_argument("start-maximized")
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_experimental_option('useAutomationExtension', False)
-    
+    options.add_argument("--headless=new")  # Chạy ở chế độ ẩn
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("window-size=1920,1080")
+
     driver = webdriver.Chrome(service=service, options=options)
 
-    stealth(driver, languages=["en-US", "en"], vendor="Google Inc.",
-            platform="Win32", webgl_vendor="Intel Inc.",
-            renderer="Intel Iris OpenGL Engine", fix_hairline=True)
-    
+    stealth(driver,
+            languages=["en-US", "en"],
+            vendor="Google Inc.",
+            platform="Win32",
+            webgl_vendor="Intel Inc.",
+            renderer="Intel Iris OpenGL Engine",
+            fix_hairline=True)
+
     try:
-        print(f"Đang truy cập URL: {season_url}")
+        print(f"Truy cập: {season_url}")
         driver.get(season_url)
-        
-        print("Bạn có 30 giây để giải CAPTCHA nếu nó xuất hiện...")
+
+        # Kiểm tra CAPTCHA
         try:
             WebDriverWait(driver, 5).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "iframe[title='reCAPTCHA']"))
             )
-            print("!!! PHÁT HIỆN CAPTCHA !!! Vui lòng giải CAPTCHA...")
-            time.sleep(30)
+            print("!!! PHÁT HIỆN CAPTCHA !!!")
+            print("Không thể tự giải CAPTCHA ở chế độ ẩn. Vui lòng tắt headless và chạy lại nếu cần.")
+            # Nếu chạy ở chế độ ẩn, chúng ta không thể giải, nên thoát
+            return 
         except:
             print("Không phát hiện CAPTCHA, tiếp tục...")
 
+        # Chấp nhận cookie (nếu có)
         try:
             wait = WebDriverWait(driver, 5)
             accept_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Accept All')]")))
@@ -110,6 +130,7 @@ def scrape_fbref_stats(season_url):
         except Exception as e:
             print("Không tìm thấy banner cookie.")
 
+        # Chờ bảng chính hiển thị
         table_id = "stats_standard"
         wait = WebDriverWait(driver, 20)
         print(f"Đang chờ bảng '{table_id}' tải...")
@@ -127,6 +148,7 @@ def scrape_fbref_stats(season_url):
         
         df = flatten_fbref_headers(df)
 
+        # Chuyển kiểu dữ liệu
         fbref_cols_to_process = list(COLUMN_MAPPING.keys())
         for col in fbref_cols_to_process:
             if col not in df.columns:
@@ -135,6 +157,7 @@ def scrape_fbref_stats(season_url):
             if col not in ['Player', 'Nation', 'Pos', 'Squad', 'Age']:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
         
+        # Lọc cầu thủ > 90 phút
         df_filtered = df[df['Playing Time_Min'] > 90].copy()
         
         if df_filtered.empty:
@@ -143,13 +166,16 @@ def scrape_fbref_stats(season_url):
 
         print(f"Thu thập được {len(df_filtered)} cầu thủ có > 90 phút thi đấu.")
 
+        # Giữ các cột hợp lệ
         valid_fbref_cols = [col for col in COLUMN_MAPPING.keys() if col in df.columns]
         df_to_save = df_filtered[valid_fbref_cols].copy()
 
         df_to_save.rename(columns=COLUMN_MAPPING, inplace=True)
         
+        # Điền giá trị thiếu
         df_to_save.fillna(pd.NA, inplace=True)
 
+        # Ghi vào database
         print("\nChuẩn bị lưu dữ liệu vào CSDL...")
         save_player_stats_to_db(df_to_save)
         
@@ -158,16 +184,20 @@ def scrape_fbref_stats(season_url):
     except Exception as e:
         print(f"Đã xảy ra lỗi trong quá trình thu thập dữ liệu: {e}")
     finally:
-        print("Đóng trình duyệt sau 5 giây.")
-        time.sleep(5)
+        print("Đóng trình duyệt.")
         driver.quit()
 
+
+# ===================== Chạy chính =====================
 if __name__ == "__main__":
-    
+    # Chỉ giữ lại 1 khối __name__
     print("--- Bước 1: Khởi tạo CSDL (nếu chưa có) ---")
     create_tables()
     
-    URL = "https://fbref.com/en/comps/9/stats/Premier-League-Stats"
+    # Sử dụng URL 2024-2025 cụ thể
+    URL = "https://fbref.com/en/comps/9/2024-2025/stats/2024-2025-Premier-League-Stats"
     
     print("\n--- Bước 2: Bắt đầu cào dữ liệu ---")
     scrape_fbref_stats(season_url=URL)
+
+# Toàn bộ code rác ở cuối file đã bị xóa

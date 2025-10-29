@@ -10,9 +10,23 @@ def create_connection():
 
 
 def create_tables():
-    conn = create_connection()
-    cur = conn.cursor()
-    cur.execute("""
+
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    DATA_DIR = os.path.join(BASE_DIR, "data")
+    DB_PATH = os.path.join(DATA_DIR, "stats.db")
+
+    def create_connection():
+        """Tạo kết nối đến SQLite DB."""
+        os.makedirs(DATA_DIR, exist_ok=True)
+        print(f"Database path: {DB_PATH}")
+        return sqlite3.connect(DB_PATH)
+
+    def create_tables():
+
+
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute("""
         CREATE TABLE IF NOT EXISTS player_stats (
                                                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                                                     player_name TEXT,
@@ -56,23 +70,30 @@ def create_tables():
                                                     npxG_plus_xAG_per90 REAL,
 
                                                     matches_url TEXT
-        );
-    """)
+            );
+        """)
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS transfer_values (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            player_name TEXT,
-            club TEXT,
-            market_value TEXT,
-            source_url TEXT
-        );
-    """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS transfer_values (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                player_name TEXT,
+                club TEXT,
+                market_value TEXT,
+                position TEXT,
+                age INTEGER,
+                nationality TEXT,
 
-    conn.commit()
-    conn.close()
+                source_url TEXT
+            );
+        """)
+
+        conn.commit()
+        conn.close()
+
     print(f"Database initialized successfully at: {DB_PATH}")
 
+
+    print(f" Database initialized successfully at {DB_PATH}")
 
 if __name__ == "__main__":
     create_tables()
