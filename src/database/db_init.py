@@ -2,98 +2,86 @@ import sqlite3
 import os
 DB_PATH = os.path.join("data", "stats.db")
 
-def create_connection():
-    if not os.path.exists("data"):
-        os.makedirs("data")
-    conn = sqlite3.connect(DB_PATH)
-    return conn
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DATA_DIR = os.path.join(BASE_DIR, "data")
+DB_PATH = os.path.join(DATA_DIR, "stats.db")
 
+def create_connection():
+    """Tạo kết nối đến SQLite DB."""
+    os.makedirs(DATA_DIR, exist_ok=True)
+    print(f"Database path: {DB_PATH}")
+    return sqlite3.connect(DB_PATH)
 
 def create_tables():
 
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    DATA_DIR = os.path.join(BASE_DIR, "data")
-    DB_PATH = os.path.join(DATA_DIR, "stats.db")
 
-    def create_connection():
-        """Tạo kết nối đến SQLite DB."""
-        os.makedirs(DATA_DIR, exist_ok=True)
-        print(f"Database path: {DB_PATH}")
-        return sqlite3.connect(DB_PATH)
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS player_stats (
+                                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                player_name TEXT,
+                                                nation TEXT,
+                                                position TEXT,
+                                                age INTEGER,
+                                                club TEXT,
 
-    def create_tables():
+                                                matches_played INTEGER,
+                                                starts INTEGER,
+                                                minutes INTEGER,
+                                                ninety_mins REAL,
 
+                                                goals INTEGER,
+                                                assists INTEGER,
+                                                goals_plus_assists INTEGER,
+                                                goals_minus_pk INTEGER,
+                                                penalties_scored INTEGER,
+                                                penalties_attempted INTEGER,
+                                                yellow_cards INTEGER,
+                                                red_cards INTEGER,
 
-        conn = create_connection()
-        cur = conn.cursor()
-        cur.execute("""
-        CREATE TABLE IF NOT EXISTS player_stats (
-                                                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                    player_name TEXT,
-                                                    nation TEXT,
-                                                    position TEXT,
-                                                    age INTEGER,
-                                                    club TEXT,
+                                                xG REAL,
+                                                npxG REAL,
+                                                xAG REAL,
+                                                npxG_plus_xAG REAL,
 
-                                                    matches_played INTEGER,
-                                                    starts INTEGER,
-                                                    minutes INTEGER,
-                                                    ninety_mins REAL,
+                                                progressive_carries INTEGER,
+                                                progressive_passes INTEGER,
+                                                progressive_receptions INTEGER,
 
-                                                    goals INTEGER,
-                                                    assists INTEGER,
-                                                    goals_plus_assists INTEGER,
-                                                    goals_minus_pk INTEGER,
-                                                    penalties_scored INTEGER,
-                                                    penalties_attempted INTEGER,
-                                                    yellow_cards INTEGER,
-                                                    red_cards INTEGER,
+                                                goals_per90 REAL,
+                                                assists_per90 REAL,
+                                                g_plus_a_per90 REAL,
+                                                g_minus_pk_per90 REAL,
+                                                g_plus_a_minus_pk_per90 REAL,
+                                                xG_per90 REAL,
+                                                xAG_per90 REAL,
+                                                xG_plus_xAG_per90 REAL,
+                                                npxG_per90 REAL,
+                                                npxG_plus_xAG_per90 REAL
 
-                                                    xG REAL,
-                                                    npxG REAL,
-                                                    xAG REAL,
-                                                    npxG_plus_xAG REAL,
+        );
+    """)
 
-                                                    progressive_carries INTEGER,
-                                                    progressive_passes INTEGER,
-                                                    progressive_receptions INTEGER,
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS transfer_values (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            player_name TEXT,
+            club TEXT,
+            market_value TEXT,
+            position TEXT,
+            age INTEGER,
+            nationality TEXT
+        );
+    """)
 
-                                                    goals_per90 REAL,
-                                                    assists_per90 REAL,
-                                                    g_plus_a_per90 REAL,
-                                                    g_minus_pk_per90 REAL,
-                                                    g_plus_a_minus_pk_per90 REAL,
-                                                    xG_per90 REAL,
-                                                    xAG_per90 REAL,
-                                                    xG_plus_xAG_per90 REAL,
-                                                    npxG_per90 REAL,
-                                                    npxG_plus_xAG_per90 REAL,
+    conn.commit()
+    conn.close()
 
-                                                    matches_url TEXT
-            );
-        """)
-
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS transfer_values (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                player_name TEXT,
-                club TEXT,
-                market_value TEXT,
-                position TEXT,
-                age INTEGER,
-                nationality TEXT,
-
-                source_url TEXT
-            );
-        """)
-
-        conn.commit()
-        conn.close()
-
-    print(f"Database initialized successfully at: {DB_PATH}")
+print(f"Database initialized successfully at: {DB_PATH}")
 
 
-    print(f" Database initialized successfully at {DB_PATH}")
+print(f" Database initialized successfully at {DB_PATH}")
 
 if __name__ == "__main__":
     create_tables()

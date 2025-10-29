@@ -1,5 +1,6 @@
 import sqlite3
 import pandas as pd
+import sys
 import os
 
 # Import đường dẫn CSDL và hàm kết nối từ file db_init.py
@@ -15,36 +16,12 @@ except ImportError:
     # SỬA Ở ĐÂY: Thêm 'src.'
     from src.database.db_init import DB_PATH, create_connection
 
-# --- (Hàm save_player_stats_to_db giữ nguyên như cũ) ---
-def save_player_stats_to_db(df_stats):
-    """
-    Lưu DataFrame thống kê cầu thủ vào bảng 'player_stats'.
-    Hàm này sẽ xóa dữ liệu cũ trước khi chèn dữ liệu mới.
-    
-    Args:
-        df_stats (pd.DataFrame): DataFrame đã được làm sạch và
-                                 ánh xạ (map) cột đúng với schema CSDL.
-    """
-    conn = create_connection()
-    cur = conn.cursor()
 
-    try:
-        cur.execute("DELETE FROM player_stats")
-        print("Đã xóa dữ liệu cũ từ bảng 'player_stats'.")
-    except: None
-
-import sys
 
 # =========================================
 # 1️⃣ Đảm bảo import đúng (kể cả chạy trực tiếp)
 # =========================================
-try:
-    from .db_init import DB_PATH, create_connection
-except ImportError:
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    if project_root not in sys.path:
-        sys.path.append(project_root)
-    from src.database.db_init import DB_PATH, create_connection
+
 
 
 def save_player_stats_to_db(df_stats: pd.DataFrame):
@@ -64,12 +41,6 @@ def save_player_stats_to_db(df_stats: pd.DataFrame):
         cur.execute("DELETE FROM player_stats")
         print("Đã xóa dữ liệu cũ từ bảng 'player_stats'.")
 
-        # Lọc bỏ các cột không hợp lệ (ví dụ matches_url, Matches, Unnamed)
-        drop_cols = [c for c in df_stats.columns if 'url' in c.lower() or 'unnamed' in c.lower()]
-        if drop_cols:
-            df_stats = df_stats.drop(columns=drop_cols, errors="ignore")
-            print(f"Đã loại bỏ {len(drop_cols)} cột không có trong DB: {drop_cols}")
-
         df_to_save = df_stats.where(pd.notnull(df_stats), None)
         cols = df_to_save.columns.tolist()
         col_names = ", ".join([f'"{c}"' for c in cols])
@@ -77,7 +48,6 @@ def save_player_stats_to_db(df_stats: pd.DataFrame):
         sql = f"INSERT INTO player_stats ({col_names}) VALUES ({placeholders})"
         data_tuples = [tuple(row) for row in df_to_save.itertuples(index=False)]
 
-        # 💾 Ghi dữ liệu
         cur.executemany(sql, data_tuples)
         conn.commit()
         print(f"Đã lưu thành công {len(data_tuples)} cầu thủ vào bảng 'player_stats'.")
