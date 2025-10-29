@@ -12,7 +12,6 @@ def create_connection():
     return sqlite3.connect(DB_PATH)
 
 def create_tables():
-
     conn = create_connection()
     cur = conn.cursor()
     cur.execute("""
@@ -23,10 +22,12 @@ def create_tables():
             position TEXT,
             age INTEGER,
             club TEXT,
+            
             matches_played INTEGER,
             starts INTEGER,
             minutes INTEGER,
             ninety_mins REAL,
+            
             goals INTEGER,
             assists INTEGER,
             goals_plus_assists INTEGER,
@@ -35,13 +36,16 @@ def create_tables():
             penalties_attempted INTEGER,
             yellow_cards INTEGER,
             red_cards INTEGER,
+            
             xG REAL,
             npxG REAL,
             xAG REAL,
             npxG_plus_xAG REAL,
+            
             progressive_carries INTEGER,
             progressive_passes INTEGER,
             progressive_receptions INTEGER,
+            
             goals_per90 REAL,
             assists_per90 REAL,
             g_plus_a_per90 REAL,
@@ -52,6 +56,7 @@ def create_tables():
             xG_plus_xAG_per90 REAL,
             npxG_per90 REAL,
             npxG_plus_xAG_per90 REAL,
+            
             matches_url TEXT
         );
     """)            
@@ -71,6 +76,6 @@ def create_tables():
     conn.commit()
     conn.close()
     print(f" Database initialized successfully at {DB_PATH}")
-
+   
 if __name__ == "__main__":
     create_tables()

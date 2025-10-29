@@ -4,7 +4,7 @@ import os
 import sys
 
 # =========================================
-# 1️⃣ Đảm bảo import đúng (kể cả chạy trực tiếp)
+# 1️⃣Đảm bảo import đúng (kể cả chạy trực tiếp)
 # =========================================
 try:
     from .db_init import DB_PATH, create_connection
@@ -45,7 +45,7 @@ def save_player_stats_to_db(df_stats: pd.DataFrame):
         sql = f"INSERT INTO player_stats ({col_names}) VALUES ({placeholders})"
         data_tuples = [tuple(row) for row in df_to_save.itertuples(index=False)]
 
-        # 💾 Ghi dữ liệu
+        #  Ghi dữ liệu
         cur.executemany(sql, data_tuples)
         conn.commit()
         print(f"Đã lưu thành công {len(data_tuples)} cầu thủ vào bảng 'player_stats'.")

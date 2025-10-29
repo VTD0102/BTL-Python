@@ -152,7 +152,6 @@ def scrape_fbref_stats(season_url: str):
 
         # Điền giá trị thiếu
         df.fillna(pd.NA, inplace=True)
-
         # Ghi vào database
         print("Ghi dữ liệu vào SQLite...")
         save_player_stats_to_db(df)
