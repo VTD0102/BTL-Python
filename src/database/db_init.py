@@ -80,8 +80,5 @@ def create_tables():
 
 print(f"Database initialized successfully at: {DB_PATH}")
 
-
-print(f" Database initialized successfully at {DB_PATH}")
-
 if __name__ == "__main__":
     create_tables()
