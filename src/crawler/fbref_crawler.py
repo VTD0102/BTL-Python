@@ -11,12 +11,16 @@ import time
 import sys
 import os
 
+
+
+from src.crawler.utils import save_raw_data, retry_on_fail
+
+
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
 try:
-    # Đã sửa lỗi gõ máy 'scr' -> 'src'
     from src.database.db_init import create_tables
     from src.database.db_utils import save_player_stats_to_db
 except ModuleNotFoundError:
@@ -24,7 +28,6 @@ except ModuleNotFoundError:
     print("Hãy đảm bảo bạn đang chạy script này từ thư mục gốc (BTL-Python)")
     print("Và đảm bảo các file __init__.py đã tồn tại.")
     sys.exit(1)
-# Khối 'except' thừa đã bị xóa
 
 # ===================== Ánh xạ cột =====================
 COLUMN_MAPPING = {
@@ -82,11 +85,8 @@ def flatten_fbref_headers(df):
     return df
 
 # ===================== Hàm cào dữ liệu chính =====================
+@retry_on_fail(max_retries=3, delay=5)
 def scrape_fbref_stats(season_url: str):
-    """
-    (Chỉ giữ lại 1 phiên bản của hàm này,
-    sử dụng phiên bản 'headless' nâng cao)
-    """
     print("Đang khởi tạo trình duyệt Chrome Stealth (chế độ ẩn)...")
     service = Service(ChromeDriverManager().install())
     options = webdriver.ChromeOptions()
@@ -116,7 +116,7 @@ def scrape_fbref_stats(season_url: str):
             print("!!! PHÁT HIỆN CAPTCHA !!!")
             print("Không thể tự giải CAPTCHA ở chế độ ẩn. Vui lòng tắt headless và chạy lại nếu cần.")
             # Nếu chạy ở chế độ ẩn, chúng ta không thể giải, nên thoát
-            return 
+            return
         except:
             print("Không phát hiện CAPTCHA, tiếp tục...")
 
@@ -135,17 +135,17 @@ def scrape_fbref_stats(season_url: str):
         wait = WebDriverWait(driver, 20)
         print(f"Đang chờ bảng '{table_id}' tải...")
         table_element = wait.until(EC.presence_of_element_located((By.ID, table_id)))
-        
+
         driver.execute_script("window.scrollTo(0, arguments[0].offsetTop - 200);", table_element)
         time.sleep(2)
 
         print("Đang đọc dữ liệu từ bảng HTML...")
         table_html = table_element.get_attribute('outerHTML')
-        
+
         df = pd.read_html(StringIO(table_html))[0]
 
         print("Đang xử lý dữ liệu...")
-        
+
         df = flatten_fbref_headers(df)
 
         # Chuyển kiểu dữ liệu
@@ -156,10 +156,10 @@ def scrape_fbref_stats(season_url: str):
                 continue
             if col not in ['Player', 'Nation', 'Pos', 'Squad', 'Age']:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
-        
+
         # Lọc cầu thủ > 90 phút
         df_filtered = df[df['Playing Time_Min'] > 90].copy()
-        
+
         if df_filtered.empty:
             print("Không tìm thấy cầu thủ nào có > 90 phút thi đấu.")
             return
@@ -171,14 +171,17 @@ def scrape_fbref_stats(season_url: str):
         df_to_save = df_filtered[valid_fbref_cols].copy()
 
         df_to_save.rename(columns=COLUMN_MAPPING, inplace=True)
-        
+
         # Điền giá trị thiếu
         df_to_save.fillna(pd.NA, inplace=True)
+
+        # Lưu dữ liệu thô
+        save_raw_data(table_html, df_to_save, prefix="premier_league")
 
         # Ghi vào database
         print("\nChuẩn bị lưu dữ liệu vào CSDL...")
         save_player_stats_to_db(df_to_save)
-        
+
         print(f"--- Hoàn thành I.1! ---")
 
     except Exception as e:
@@ -193,10 +196,10 @@ if __name__ == "__main__":
     # Chỉ giữ lại 1 khối __name__
     print("--- Bước 1: Khởi tạo CSDL (nếu chưa có) ---")
     create_tables()
-    
+
     # Sử dụng URL 2024-2025 cụ thể
-    URL = "https://fbref.com/en/comps/9/2024-2025/stats/2024-2025-Premier-League-Stats"
-    
+    URL = "https://fbref.com/en/comps/9/stats/Premier-League-Stats"
+
     print("\n--- Bước 2: Bắt đầu cào dữ liệu ---")
     scrape_fbref_stats(season_url=URL)
 
