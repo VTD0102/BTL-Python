@@ -1,124 +1,139 @@
 import pandas as pd
-import requests
-from urllib.parse import quote_plus
-import time
-import sys
-import os
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium_stealth import stealth
+import time, os, sys
 
+# ====== Setup project path ======
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
 try:
     from src.database.db_init import create_tables
-    from src.database.db_utils import read_player_list, save_transfer_values
-    from src.crawler.utils import get_soup_from_session
-except ImportError:
-    print("Lỗi: Không thể import 'src.database' hoặc 'src.crawler.utils'.")
-    print("Vui lòng kiểm tra các file __init__.py và các hàm trong db_utils.py")
+    from src.database.db_utils import save_transfer_values_to_db
+except ModuleNotFoundError:
+    print("❌ Lỗi: Không tìm thấy module database.")
     sys.exit(1)
 
-def get_transfer_value(session, player_name):
-    base_url = "https://www.footballtransfers.com"
-    search_query = quote_plus(player_name)
-    search_url = f"{base_url}/en/players/search/{search_query}"
-    
-    player_data = {
-        'market_value': 'N/a',
-        'position': 'N/a',
-        'age': 'N/a',
-        'nationality': 'N/a'
-    }
+RAW_DIR = os.path.join(project_root, "data", "raw")
+os.makedirs(RAW_DIR, exist_ok=True)
+
+COLUMN_MAPPING = {
+    "Player": "player_name",
+    "Club": "club",
+    "Age": "age",
+    "Skill": "skill_score",
+    "Pot": "potential_score",
+    "Value": "market_value"
+}
+
+
+def scrape_transfer_values_all_pages(base_url: str, total_pages: int = 22, delay: float = 2.0):
+    print("🚀 Đang khởi tạo trình duyệt Stealth Chrome...")
+    service = Service(ChromeDriverManager().install())
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless=new")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("window-size=1920,1080")
+    driver = webdriver.Chrome(service=service, options=options)
+
+    stealth(driver,
+            languages=["en-US", "en"],
+            vendor="Google Inc.",
+            platform="Win32",
+            webgl_vendor="Intel Inc.",
+            renderer="Intel Iris OpenGL Engine",
+            fix_hairline=True)
+
+    all_records = []
 
     try:
-        search_soup = get_soup_from_session(session, search_url)
-        if search_soup is None:
-            return player_data
-        
-        player_link_element = search_soup.find('a', class_='player-name-search')
-        
-        if not player_link_element or not player_link_element.get('href'):
-            return player_data
+        page_urls = [base_url] + [f"{base_url}/{i}" for i in range(2, total_pages + 1)]
 
-        player_page_url = player_link_element['href']
-        if not player_page_url.startswith('http'):
-            player_page_url = base_url + player_page_url
-        
-        time.sleep(1)
-        player_soup = get_soup_from_session(session, player_page_url)
-        if player_soup is None:
-            return player_data
-        
-        value_el = player_soup.find('span', class_='player-value')
-        if value_el:
-            player_data['market_value'] = value_el.text.strip()
-            
-        pos_el = player_soup.find('span', {'data-qa': 'player-position'})
-        if pos_el:
-            player_data['position'] = pos_el.text.strip()
-            
-        age_el = player_soup.find('span', {'data-qa': 'player-age'})
-        if age_el:
-            age_text = age_el.text.strip().replace('(', '').replace(')', '')
+        for idx, page_url in enumerate(page_urls, start=1):
+            print(f"\n🌍 Trang {idx}/{total_pages}: {page_url}")
+            driver.get(page_url)
+
             try:
-                player_data['age'] = int(age_text)
-            except ValueError:
-                player_data['age'] = 'N/a'
-        
-        nat_el = player_soup.find('span', {'data-qa': 'player-nationality'})
-        if nat_el:
-            player_data['nationality'] = nat_el.text.strip()
+                WebDriverWait(driver, 15).until(
+                    EC.presence_of_all_elements_located((By.CSS_SELECTOR, "table tbody tr"))
+                )
+            except:
+                print("⚠️ Không tìm thấy bảng, bỏ qua trang.")
+                continue
 
-        return player_data
-            
+            time.sleep(2)
+            rows = driver.find_elements(By.CSS_SELECTOR, "table tbody tr")
+            print(f"  → Tìm thấy {len(rows)} hàng trên trang {idx}")
+
+            page_data = []
+            for row in rows:
+                try:
+                    skill = row.find_element(By.CSS_SELECTOR, "div.table-skill__skill").text.strip()
+                    pot = row.find_element(By.CSS_SELECTOR, "div.table-skill__pot").text.strip()
+                    name = row.find_element(By.CSS_SELECTOR, "td.td-player a").text.strip()
+                    club = row.find_element(By.CSS_SELECTOR, "span.td-team__teamname").text.strip()
+                    age_text = row.find_element(By.CSS_SELECTOR, "td.m-hide.age").text.strip()
+                    value = row.find_element(By.CSS_SELECTOR, "span.player-tag").text.strip()
+
+                    if name:
+                        page_data.append({
+                            "Player": name,
+                            "Club": club,
+                            "Age": int(age_text) if age_text.isdigit() else None,
+                            "Skill": float(skill) if skill.replace('.', '', 1).isdigit() else None,
+                            "Pot": float(pot) if pot.replace('.', '', 1).isdigit() else None,
+                            "Value": value
+                        })
+                except Exception:
+                    continue
+
+            print(f"  ✅ Trang {idx}: thu được {len(page_data)} cầu thủ hợp lệ.")
+
+            if page_data:
+                df_page = pd.DataFrame(page_data)
+                df_page.rename(columns=COLUMN_MAPPING, inplace=True)
+                df_page = df_page.where(pd.notnull(df_page), None)
+
+                # lưu luôn vào DB
+                save_transfer_values_to_db(df_page)
+                print(f"  💾 Đã lưu {len(df_page)} bản ghi trang {idx} vào stats.db.")
+
+                # gom tất cả để lưu CSV cuối
+                all_records.extend(page_data)
+
+            time.sleep(delay)
+
+        if all_records:
+            df_all = pd.DataFrame(all_records)
+            df_all.rename(columns=COLUMN_MAPPING, inplace=True)
+            df_all.to_csv(os.path.join(RAW_DIR, "transfer_values_full.csv"), index=False, encoding="utf-8-sig")
+            print(f"\n📁 Đã lưu toàn bộ dữ liệu vào: data/raw/transfer_values_full.csv")
+        else:
+            print("⚠️ Không có dữ liệu nào được thu thập!")
+
     except Exception as e:
-        print(f"   > Lỗi khi cào {player_name}: {e}")
-        return player_data
+        print(f"❌ Lỗi trong quá trình cào: {e}")
+    finally:
+        driver.quit()
+        print("🧹 Đã đóng trình duyệt.")
 
-def scrape_all_transfer_values():
-    print("--- Bước 1: Khởi tạo CSDL (kiểm tra bảng 'transfer_values') ---")
-    create_tables()
-    
-    print("\n--- Bước 2: Đọc danh sách cầu thủ từ 'player_stats' ---")
-    players_df = read_player_list()
-    
-    if players_df.empty:
-        print("Lỗi: Không tìm thấy dữ liệu trong bảng 'player_stats'.")
-        print("Vui lòng chạy 'fbref_crawler.py' trước.")
-        return
-
-    print(f"Đã đọc được {len(players_df)} cầu thủ từ CSDL.")
-    
-    results_list = []
-    session = requests.Session()
-    
-    print("\n--- Bước 3: Bắt đầu cào dữ liệu giá chuyển nhượng (Quá trình này sẽ chậm) ---")
-    
-    for index, row in players_df.iterrows():
-        player_name = row['player_name']
-        club = row['club']
-        
-        print(f"({index + 1}/{len(players_df)}) Đang cào: {player_name} ({club})...")
-        
-        player_data = get_transfer_value(session, player_name)
-        
-        full_record = {
-            'player_name': player_name,
-            'club': club,
-            **player_data
-        }
-        results_list.append(full_record)
-        
-        print(f"   > Kết quả: {player_data['market_value']}, {player_data['position']}")
-        
-        time.sleep(2)
-
-    print("\n--- Bước 4: Đã cào xong. Chuẩn bị lưu vào 'transfer_values' ---")
-    values_df = pd.DataFrame(results_list)
-    
-    save_transfer_values(values_df)
-    
-    print(f"--- Hoàn thành I.2! ---")
 
 if __name__ == "__main__":
-    scrape_all_transfer_values()
+    print("--- Bước 1: Khởi tạo CSDL (nếu chưa có) ---")
+    create_tables()
+
+    # 🧹 Xóa dữ liệu cũ trong bảng transfer_values trước khi cào mới
+    from src.database.db_utils import clear_table
+    clear_table("transfer_values")
+
+    BASE_URL = "https://www.footballtransfers.com/us/players/uk-premier-league"
+    TOTAL_PAGES = 22
+
+    print("\n--- Bước 2: Bắt đầu cào dữ liệu ---")
+    scrape_transfer_values_all_pages(BASE_URL, total_pages=TOTAL_PAGES)

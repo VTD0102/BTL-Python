@@ -1,93 +1,109 @@
 import sqlite3
 import pandas as pd
 import os
-import sys
 
+# Import đường dẫn CSDL và hàm kết nối từ file db_init.py
 try:
-    from .db_init import DB_PATH, create_connection
+    from db_init import DB_PATH, create_connection
 except ImportError:
+    # Xử lý nếu chạy file này độc lập (thêm thư mục gốc vào path)
+    import sys
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
     if project_root not in sys.path:
         sys.path.append(project_root)
     from src.database.db_init import DB_PATH, create_connection
 
-def save_player_stats_to_db(df_stats):
+
+
+# =========================================
+# 1 Đảm bảo import đúng (kể cả chạy trực tiếp)
+# =========================================
+
+
+
+def save_player_stats_to_db(df_stats: pd.DataFrame):
     conn = create_connection()
-    cur = conn.cursor()
+    if conn is None:
+        print(f"Không thể kết nối đến cơ sở dữ liệu tại {DB_PATH}")
+        return
 
     try:
-        cur.execute("PRAGMA table_info(player_stats)")
-        db_cols = [row[1] for row in cur.fetchall()]
-        df_cols = df_stats.columns.tolist()
-        
-        valid_cols = [c for c in df_cols if c in db_cols]
-        df_to_save = df_stats[valid_cols]
-
+        cur = conn.cursor()
+        # 1) Xoá dữ liệu cũ
         cur.execute("DELETE FROM player_stats")
-        print("Đã xóa dữ liệu cũ từ bảng 'player_stats'.")
-        
-        col_names = ", ".join([f'"{c}"' for c in valid_cols])
-        placeholders = ", ".join(["?"] * len(valid_cols))
-        sql = f"INSERT INTO player_stats ({col_names}) VALUES ({placeholders})"
-        
-        data_tuples = [tuple(row) for row in df_to_save.where(pd.notnull(df_to_save), None).itertuples(index=False)]
+        # 2) Reset AUTOINCREMENT cho bảng này
+        cur.execute("DELETE FROM sqlite_sequence WHERE name = 'player_stats'")
+        print("Đã xóa dữ liệu cũ & reset ID của bảng 'player_stats'.")
 
+        # 3) Chuẩn bị dữ liệu mới
+        df_to_save = df_stats.where(pd.notnull(df_stats), None)
+        cols = df_to_save.columns.tolist()
+        col_names = ", ".join([f'"{c}"' for c in cols])
+        placeholders = ", ".join(["?"] * len(cols))
+        sql = f"INSERT INTO player_stats ({col_names}) VALUES ({placeholders})"
+        data_tuples = [tuple(row) for row in df_to_save.itertuples(index=False)]
+
+        # 4) Ghi & xác nhận
         cur.executemany(sql, data_tuples)
         conn.commit()
         print(f"Đã lưu thành công {len(data_tuples)} cầu thủ vào 'player_stats'.")
 
-    except sqlite3.Error as e:
-        print(f"Lỗi SQLite khi chèn dữ liệu 'player_stats': {e}")
-        conn.rollback() 
+    except sqlite3.OperationalError as e:
+        print(f"Lỗi SQL: {e}")
+        conn.rollback()
     except Exception as e:
         print(f"Lỗi không xác định: {e}")
         conn.rollback()
     finally:
         conn.close()
-        print(f"Đã đóng kết nối cơ sở dữ liệu ({DB_PATH})")
+        print(f"Đã đóng kết nối CSDL ({DB_PATH})")
 
-def read_player_list():
-    conn = create_connection()
-    try:
-        query = "SELECT player_name, club FROM player_stats"
-        df = pd.read_sql_query(query, conn)
-        return df
-    except Exception as e:
-        print(f"Lỗi khi đọc 'player_stats': {e}")
-        return pd.DataFrame()
-    finally:
-        if conn:
-            conn.close()
 
-def save_transfer_values(df_values):
+
+def save_transfer_values_to_db(df_transfer: pd.DataFrame):
+    from src.database.db_init import create_connection, DB_PATH
     conn = create_connection()
     cur = conn.cursor()
-    
-    db_cols = ['player_name', 'club', 'market_value', 'position', 'age', 'nationality']
-    
-    df_to_save = df_values[[col for col in db_cols if col in df_values.columns]]
-
     try:
-        cur.execute("DELETE FROM transfer_values")
-        print("Đã xóa dữ liệu cũ từ bảng 'transfer_values'.")
-
-        col_names = ", ".join([f'"{c}"' for c in df_to_save.columns])
-        placeholders = ", ".join(["?"] * len(df_to_save.columns))
+        df_to_save = df_transfer.where(pd.notnull(df_transfer), None)
+        cols = df_to_save.columns.tolist()
+        col_names = ", ".join([f'"{c}"' for c in cols])
+        placeholders = ", ".join(["?"] * len(cols))
         sql = f"INSERT INTO transfer_values ({col_names}) VALUES ({placeholders})"
-        
-        data_tuples = [tuple(row) for row in df_to_save.where(pd.notnull(df_to_save), None).itertuples(index=False)]
+        data_tuples = [tuple(row) for row in df_to_save.itertuples(index=False)]
 
         cur.executemany(sql, data_tuples)
         conn.commit()
-        print(f"Đã lưu thành công {len(data_tuples)} cầu thủ vào 'transfer_values'.")
+        print(f"🧩 Đã thêm {len(data_tuples)} cầu thủ vào bảng 'transfer_values'.")
 
-    except sqlite3.Error as e:
-        print(f"Lỗi SQLite khi chèn dữ liệu 'transfer_values': {e}")
-        conn.rollback()
     except Exception as e:
-        print(f"Lỗi không xác định: {e}")
+        print(f"⚠️ Lỗi khi lưu DB: {e}")
         conn.rollback()
     finally:
-        if conn:
-            conn.close()
-            print(f"Đã đóng kết nối cơ sở dữ liệu ({DB_PATH})")
+        conn.close()
+
+import sqlite3
+from src.database.db_init import create_connection, DB_PATH
+
+def clear_table(table_name: str):
+    """
+    Xóa toàn bộ dữ liệu trong bảng chỉ định và reset lại ID tự tăng (AUTOINCREMENT).
+    """
+    conn = create_connection()
+    if conn is None:
+        print(f"❌ Không thể kết nối đến cơ sở dữ liệu tại {DB_PATH}")
+        return
+
+    try:
+        cur = conn.cursor()
+        cur.execute(f"DELETE FROM {table_name};")
+        cur.execute(f"DELETE FROM sqlite_sequence WHERE name='{table_name}';")  # reset AUTOINCREMENT
+        conn.commit()
+        print(f"🧹 Đã xóa toàn bộ dữ liệu cũ trong bảng '{table_name}' và reset ID.")
+    except sqlite3.Error as e:
+        print(f"⚠️ Lỗi khi xóa bảng '{table_name}': {e}")
+        conn.rollback()
+    finally:
+        conn.close()
+
+
