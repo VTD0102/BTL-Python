@@ -145,7 +145,6 @@ def scrape_fbref_stats(season_url: str):
         df = pd.read_html(StringIO(table_html))[0]
 
         print("Đang xử lý dữ liệu...")
-
         df = flatten_fbref_headers(df)
 
         # Chuyển kiểu dữ liệu
@@ -193,7 +192,6 @@ def scrape_fbref_stats(season_url: str):
 
 # ===================== Chạy chính =====================
 if __name__ == "__main__":
-    # Chỉ giữ lại 1 khối __name__
     print("--- Bước 1: Khởi tạo CSDL (nếu chưa có) ---")
     create_tables()
 

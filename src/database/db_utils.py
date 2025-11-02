@@ -51,9 +51,6 @@ def save_player_stats_to_db(df_stats: pd.DataFrame):
     except sqlite3.OperationalError as e:
         print(f"Lỗi SQL: {e}")
         conn.rollback()
-    except Exception as e:
-        print(f"Lỗi không xác định: {e}")
-        conn.rollback()
     finally:
         conn.close()
         print(f"Đã đóng kết nối CSDL ({DB_PATH})")
