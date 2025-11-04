@@ -6,7 +6,7 @@ from tqdm import tqdm
 from sentence_transformers import SentenceTransformer, util
 
 # =========================================
-# 1️⃣ Cấu hình đường dẫn
+# 1 Cấu hình đường dẫn
 # =========================================
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -30,7 +30,7 @@ df_trans = pd.read_csv(TRANSFER_CSV)
 print(f"💶 Đã đọc {len(df_trans)} cầu thủ từ FootballTransfers (CSV)")
 
 # =========================================
-# 3️⃣ Hàm chuẩn hóa tên & CLB
+# 3 Hàm chuẩn hóa tên & CLB
 # =========================================
 def normalize_name(name):
     if not isinstance(name, str):
@@ -100,7 +100,7 @@ for i, row in tqdm(enumerate(df_stats.itertuples()), total=len(df_stats)):
     matched_records.append(matched_row)
 
 # =========================================
-# 7️⃣ Tạo DataFrame kết quả
+# 7 Tạo DataFrame kết quả
 # =========================================
 df_merge = pd.DataFrame(matched_records)
 
@@ -122,7 +122,7 @@ conn.close()
 print(f"💾 Đã lưu bảng 'player_full_stats_vectorlite' vào CSDL: {DB_PATH}")
 
 # =========================================
-# 9️⃣ Báo cáo nhanh
+# 9 Báo cáo nhanh
 # =========================================
 print("\n📊 Báo cáo:")
 print(f"  🔸 Tổng cầu thủ FBref: {len(df_stats)}")
