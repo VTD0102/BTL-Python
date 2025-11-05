@@ -41,4 +41,6 @@ def create_tables():
     conn.close()
     print("🎯 Database schema fully initialized!")
 
-print(f"Database initialized successfully at: {DB_PATH}")
+
+if __name__ == "__main__":
+    create_tables()

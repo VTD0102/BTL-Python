@@ -133,12 +133,4 @@ def main():
 
 
 if __name__ == "__main__":
-    print("--- Bước 1: Khởi tạo CSDL (nếu chưa có) ---")
-    create_tables()
-
-    # Sử dụng URL 2024-2025 cụ thể
-    URL = "https://fbref.com/en/comps/9/stats/Premier-League-Stats"
-
-    print("\n--- Bước 2: Bắt đầu cào dữ liệu ---")
-    scrape_fbref_stats(season_url=URL)
-
+    main()
