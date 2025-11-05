@@ -92,4 +92,3 @@ def create_tables():
     conn.close()
 
 print(f"Database initialized successfully at: {DB_PATH}")
-

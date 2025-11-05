@@ -102,5 +102,3 @@ def clear_table(table_name: str):
         conn.rollback()
     finally:
         conn.close()
-
-

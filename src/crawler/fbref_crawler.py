@@ -200,4 +200,3 @@ if __name__ == "__main__":
 
     print("\n--- Bước 2: Bắt đầu cào dữ liệu ---")
     scrape_fbref_stats(season_url=URL)
-
