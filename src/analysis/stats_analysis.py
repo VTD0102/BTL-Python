@@ -35,11 +35,11 @@ def analyze_stats():
     )
     print("Các bảng trong DB:", tables["name"].tolist())
 
-    if "stats" not in tables["name"].values:
-        raise Exception("Không tìm thấy bảng 'stats' trong database!")
+    if "PLAYER_STATS" not in tables["name"].values:
+        raise Exception("Không tìm thấy bảng 'PLAYER_STATS' trong database!")
 
     # Đọc bảng stats
-    df = pd.read_sql_query("SELECT * FROM stats;", conn)
+    df = pd.read_sql_query("SELECT * FROM PLAYER_STATS;", conn)
     conn.close()
 
     print("Loaded stats:", df.shape)
