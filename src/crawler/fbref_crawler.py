@@ -21,17 +21,17 @@ DB_PATH = os.path.join(DATA_DIR, "stats.db")
 
 # Tất cả endpoint FBREF cho EPL 2024-2025
 ALL_STATS_URL = [
-    "https://fbref.com/en/comps/9/stats/Premier-League-Stats",
-    "https://fbref.com/en/comps/9/keepers/Premier-League-Stats",
-    "https://fbref.com/en/comps/9/keepersadv/Premier-League-Stats",
-    "https://fbref.com/en/comps/9/shooting/Premier-League-Stats",
-    "https://fbref.com/en/comps/9/passing/Premier-League-Stats",
-    "https://fbref.com/en/comps/9/passing_types/Premier-League-Stats",
-    "https://fbref.com/en/comps/9/gca/Premier-League-Stats",
-    "https://fbref.com/en/comps/9/defense/Premier-League-Stats",
-    "https://fbref.com/en/comps/9/possession/Premier-League-Stats",
-    "https://fbref.com/en/comps/9/playingtime/Premier-League-Stats",
-    "https://fbref.com/en/comps/9/misc/Premier-League-Stats"
+    "https://fbref.com/en/comps/9/2024-2025/stats/2024-2025-Premier-League-Stats",
+    "https://fbref.com/en/comps/9/2024-2025/keepers/2024-2025-Premier-League-Stats",
+    "https://fbref.com/en/comps/9/2024-2025/keepersadv/2024-2025-Premier-League-Stats",
+    "https://fbref.com/en/comps/9/2024-2025/shooting/2024-2025-Premier-League-Stats",
+    "https://fbref.com/en/comps/9/2024-2025/passing/2024-2025-Premier-League-Stats",
+    "https://fbref.com/en/comps/9/2024-2025/passing_types/2024-2025-Premier-League-Stats",
+    "https://fbref.com/en/comps/9/2024-2025/gca/2024-2025-Premier-League-Stats",
+    "https://fbref.com/en/comps/9/2024-2025/defense/2024-2025-Premier-League-Stats",
+    "https://fbref.com/en/comps/9/2024-2025/possession/2024-2025-Premier-League-Stats",
+    "https://fbref.com/en/comps/9/2024-2025/playingtime/2024-2025-Premier-League-Stats",
+    "https://fbref.com/en/comps/9/2024-2025/misc/2024-2025-Premier-League-Stats"
 ]
 
 # ----------------------
