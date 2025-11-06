@@ -1,17 +1,20 @@
-# Các module cần cho việc đọc mã nguồn trang web và thao tác với CSDL
+# ===============================================
+# FBREF PLAYER STATS CRAWLER (Optimized)
+# ===============================================
+
 import pandas as pd
 from io import StringIO
 import sqlite3
-
-# Module debug thanh tiến trình
-from tqdm import tqdm
-
-# Web crawler
-from bs4 import BeautifulSoup
-import undetected_chromedriver as UC
+import os
 import time
 import random
-import os
+
+from tqdm import tqdm
+from bs4 import BeautifulSoup
+import undetected_chromedriver as UC
+from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import TimeoutException
+
 
 DATABASE_NAME = "stats.db"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -19,7 +22,9 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 DB_PATH = os.path.join(DATA_DIR, "stats.db")
 
 
-# Tất cả endpoint FBREF cho EPL 2024-2025
+# ===============================================
+# FBREF ENDPOINTS (EPL 2024–2025)
+# ===============================================
 ALL_STATS_URL = [
     "https://fbref.com/en/comps/9/2024-2025/stats/2024-2025-Premier-League-Stats",
     "https://fbref.com/en/comps/9/2024-2025/keepers/2024-2025-Premier-League-Stats",
@@ -34,55 +39,96 @@ ALL_STATS_URL = [
     "https://fbref.com/en/comps/9/2024-2025/misc/2024-2025-Premier-League-Stats"
 ]
 
-# ----------------------
+
+# ===============================================
+# INIT UC DRIVER
+# ===============================================
+def get_driver():
+    opts = Options()
+    opts.page_load_strategy = "eager"      # ✅ load nhanh hơn
+    opts.add_argument("--no-sandbox")
+    opts.add_argument("--disable-gpu")
+    opts.add_argument("--disable-dev-shm-usage")
+    # opts.add_argument("--headless=new")   # ✅ bật nếu muốn chạy ngầm
+
+    driver = UC.Chrome(version_main=141, options=opts)
+    driver.set_page_load_timeout(120)       # ✅ timeout cao hơn
+    return driver
+
+
+# ===============================================
 # DB INIT
-# ----------------------
+# ===============================================
 def setup_database():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    cursor.execute("DROP TABLE IF EXISTS stats")
+    cursor.execute("DROP TABLE IF EXISTS PLAYER_STATS")
 
     conn.commit()
     conn.close()
 
     print(f"Database path: {DB_PATH}")
-    print(f"Đã reset bảng stats trong {DATABASE_NAME}\n")
+    print(f"✅ Đã reset bảng PLAYER_STATS trong {DATABASE_NAME}\n")
 
-# ----------------------
+
+# ===============================================
 # SAVE TO DB
-# ----------------------
+# ===============================================
 def save_to_database(df, table_name):
     try:
         conn = sqlite3.connect(DB_PATH)
         df.to_sql(table_name, conn, if_exists="replace", index=False)
         conn.commit()
         conn.close()
-
-        print(f"Đã lưu vào bảng '{table_name}' trong {DATABASE_NAME}!\n")
+        print(f"✅ Đã lưu vào bảng '{table_name}' trong {DATABASE_NAME}!\n")
     except Exception as e:
-        print(f"Lỗi khi lưu bảng {table_name}: {e}")
+        print(f"❌ Lỗi khi lưu bảng {table_name}: {e}")
 
 
-# ----------------------
-# MAIN CRAWLER
-# ----------------------
+# ===============================================
+# CORE CRAWL
+# ===============================================
 def get_player_stats():
     df_list = []
-    driver = UC.Chrome(version_main=141)
+    driver = get_driver()
 
     for url in tqdm(ALL_STATS_URL, total=len(ALL_STATS_URL), desc="Đang thu thập stats"):
-        driver.get(url)
+        success = False
 
-        time.sleep(random.randint(5, 7))
+        for attempt in range(2):     # ✅ retry tối đa 2 lần / URL
+            try:
+                driver.get(url)
 
-        html = driver.page_source
-        soup = BeautifulSoup(html, 'html.parser')
+                # ✅ chờ document ready
+                for _ in range(25):
+                    state = driver.execute_script("return document.readyState;")
+                    if state == "complete":
+                        break
+                    time.sleep(1)
+
+                success = True
+                break
+
+            except TimeoutException:
+                print(f"⚠️ Timeout — thử lại {attempt+1}/2 ...")
+                time.sleep(3)
+            except Exception as e:
+                print(f"⚠️ Lỗi load URL: {url} — {e}")
+                time.sleep(3)
+
+        if not success:
+            print(f"❌ Bỏ qua URL: {url}\n")
+            continue
+
+        time.sleep(random.uniform(3, 6))   # ✅ sleep random chống bị block
+
+        soup = BeautifulSoup(driver.page_source, "html.parser")
 
         stats_table = soup.find('table', id=lambda x: x and x.startswith('stats_') and 'squads' not in x)
 
         if stats_table is None:
-            print(f"Không tìm thấy bảng ở URL: {url}")
+            print(f"⚠️ Không tìm thấy bảng ở URL: {url}")
             continue
 
         df = pd.read_html(StringIO(str(stats_table)), header=1)[0]
@@ -93,43 +139,58 @@ def get_player_stats():
             df = df.drop(columns=['Rk'])
 
         df = df.set_index(['Player', 'Squad'])
-
         df_list.append(df)
-
-        time.sleep(random.randint(3, 5))
 
     driver.quit()
 
     if not df_list:
-        print("Không có dữ liệu")
+        print("❌ Không có dữ liệu")
         return pd.DataFrame()
 
     merge_df = pd.concat(df_list, axis=1)
     merge_df = merge_df.loc[:, ~merge_df.columns.duplicated()]
     merge_df = merge_df.reset_index()
 
+    # lọc cầu thủ có > 90 phút
     if "Min" in merge_df.columns:
         merge_df["Min"] = pd.to_numeric(merge_df["Min"], errors="coerce")
         merge_df = merge_df[merge_df["Min"] > 90]
 
     merge_df.fillna("N/A", inplace=True)
 
-    print(f"Thu thập thành công dữ liệu của {len(merge_df)} cầu thủ!\n")
+    print(f"✅ Thu thập thành công dữ liệu của {len(merge_df)} cầu thủ!\n")
 
     return merge_df
 
 
-# ----------------------
+# ===============================================
+# EXPORT RAW CSV
+# ===============================================
+RAW_DIR = os.path.join(DATA_DIR, "raw")
+CSV_PATH = os.path.join(RAW_DIR, "player_stats.csv")
+
+
+def save_to_csv(df):
+    try:
+        os.makedirs(RAW_DIR, exist_ok=True)
+        df.to_csv(CSV_PATH, index=False)
+        print(f"✅ Đã lưu CSV: {CSV_PATH}\n")
+    except Exception as e:
+        print(f"❌ Lỗi lưu CSV: {e}")
+
+
+# ===============================================
 # MAIN
-# ----------------------
+# ===============================================
 def main():
     setup_database()
 
     stats_df = get_player_stats()
 
-    save_to_database(stats_df, 'stats')
+    save_to_database(stats_df, "PLAYER_STATS")
+    save_to_csv(stats_df)
 
-    print("Hoàn tất chương trình!")
+    print("🎉 Hoàn tất chương trình!")
 
 
 if __name__ == "__main__":
