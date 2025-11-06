@@ -86,52 +86,29 @@ def get_driver():
 
 
 # =============================================================
-# ✅ GET TRANSFER VALUE  (with Retry + Backoff)
+# ✅ GET TRANSFER VALUE (NO RATE LIMIT HANDLING)
 # =============================================================
-def get_transfer_value(driver, player_name: str, retry=3):
-    """
-    Search → lấy giá trị đầu tiên từ FootballTransfers
-    Retry + exponential backoff để tránh timeout / rate limit
-    """
-
+def get_transfer_value(driver, player_name: str):
     q = player_name.replace(" ", "%20")
     search_url = f"https://www.footballtransfers.com/us/search?search_value={q}"
 
-    for attempt in range(1, retry + 1):
-        try:
-            driver.get(search_url)
+    try:
+        driver.get(search_url)
 
-            # Detect rate limit page
-            page_text = driver.page_source.lower()
-            if "rate limit" in page_text or "too many" in page_text:
-                wait_more = 5 + attempt * random.uniform(2, 4)
-                print(f"🚫 RATE-LIMIT DETECTED → đợi {wait_more:.1f}s")
-                time.sleep(wait_more)
-                continue
+        el = WebDriverWait(driver, 8).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "span.player-tag"))
+        )
 
-            el = WebDriverWait(driver, 15).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "span.player-tag"))
-            )
+        return el.text.strip()
 
-            return el.text.strip()
-
-        except Exception as e:
-            print(f"⚠️ Attempt {attempt}/{retry} failed → {player_name}")
-            print("   Lỗi:", e)
-
-            # exponential backoff
-            sleep_time = 2 + attempt * random.uniform(1.5, 3.5)
-            print(f"⏳ Backoff {sleep_time:.1f}s trước khi retry...")
-            time.sleep(sleep_time)
-
-    print(f"❌ GIVE UP → {player_name}")
-    return None
+    except Exception:
+        return None
 
 
 # =============================================================
 # ✅ MAIN CRAWL
 # =============================================================
-def scrape_value_for_player_list(players: list, delay: float = 1.2):
+def scrape_value_for_player_list(players: list, delay: float = 1.0):
     driver = get_driver()
     collected = []
 
@@ -140,17 +117,17 @@ def scrape_value_for_player_list(players: list, delay: float = 1.2):
         for idx, name in enumerate(players, start=1):
             print(f"\n({idx}/{total}) Đang lấy: {name}")
 
-            value = get_transfer_value(driver, name, retry=3)
+            value = get_transfer_value(driver, name)
+
+            print(f"   ✅ {name} → {value}")
 
             collected.append({
                 "player_name": name,
                 "transfer_value": value
             })
 
-            # random delay để tránh pattern
-            random_sleep = delay + random.uniform(0.5, 1.6)
-            print(f"   ⏳ Nghỉ {random_sleep:.1f}s")
-            time.sleep(random_sleep)
+            # delay random nhẹ
+            time.sleep(delay + random.uniform(0.2, 0.6))
 
         if collected:
             df = pd.DataFrame(collected)
