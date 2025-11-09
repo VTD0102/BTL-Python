@@ -1,94 +1,90 @@
-# -*- coding: utf-8 -*-
 import sqlite3
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
+import plotly.express as px
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
+from mpl_toolkits.mplot3d import Axes3D
 import warnings
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
 
-# ==================== 1. ĐỌC DỮ LIỆU ====================
-print("Đang đọc dữ liệu từ stats.db...")
+# 1️ Đọc dữ liệu
+print(" Đang tải dữ liệu từ cơ sở dữ liệu SQLite...")
+
 conn = sqlite3.connect("data/stats.db")
 df = pd.read_sql_query("SELECT * FROM PLAYER_STATS", conn)
 conn.close()
-print(f"Đã tải {len(df):,} cầu thủ")
 
-# ==================== 2. LOẠI BỎ CÁC CỘT KHÔNG DÙNG ====================
-ban_list = [
-    'Player', 'Squad', 'Nation', 'Pos', 'Born', 'Matches',
+print(f"✅ Đã đọc {len(df)} cầu thủ, {len(df.columns)} cột dữ liệu.\n")
+
+# 2️ Tiền xử lý dữ liệu
+# Loại bỏ các cột không dùng cho phân cụm
+drop_cols = [    'Player', 'Squad', 'Nation', 'Pos', 'Born', 'Matches',
     'Age', 'MP', 'Starts', 'Min', '90s',
     'Mn/MP', 'Min%', 'Mn/Start', 'Mn/Sub', 'Compl', 'Subs', 'unSub', 'PPM',
-    'onG', 'onGA', '+/-', '+/-90', 'On-Off', 'onxG', 'onxGA', 'xG+/-', 'xG+/-90', 'On-Off.1',
-    '2CrdY', 'FK', 'CK', 'OG', 'Err'
-]
-df_clean = df.drop(columns=[c for c in ban_list if c in df.columns], errors='ignore')
+    'onG', 'onGA', '+/-', '+/-90', 'On-Off', 'On-Off.1',
+    '2CrdY', 'FK', 'CK', 'OG', 'Err',
 
-# ==================== 3. GIỮ CHỈ SỐ PHONG CÁCH ====================
-keep_cols = [
-    'Gls.1', 'Ast.1', 'G+A.1', 'G-PK.1', 'xG.1', 'xAG.1', 'npxG.1',
-    'PrgC', 'PrgP', 'PrgR', 'SCA90', 'GCA90', 'KP', '1/3', 'PPA', 'CrsPA',
-    'Tkl', 'TklW', 'Int', 'Clr', 'Blocks', 'Recov',
-    'GA90', 'Save%', 'CS%', 'PSxG+/-', 'Launch%', 'Cmp%', 'Opp', 'Stp%',
-    'SoT%', 'G/Sh', 'Succ%', 'Tkld%', 'Won%'
-]
-final_cols = [c for c in keep_cols if c in df_clean.columns]
-X_raw = df_clean[final_cols].apply(pd.to_numeric, errors='coerce').fillna(0)
-print(f"Sử dụng {len(final_cols)} chỉ số phong cách.")
+#loại bỏ các cột thể hiện các chỉ số phụ thuộc vào thời gian ra sân
+    'Gls', 'Ast', 'G+A', 'G-PK', 'xG','npxG', 'xAG', 'npxG+xAG' 
+    'GA', 'SoTA', 'Saves', 'CS', 'PSxG', 
+    'Sh', 'SoT', 'TotDist', 'PrgDist', 'SCA', 'GCA', 'Tkl', 'Touches'
+    ]
+numeric_df = df.drop(columns=drop_cols, errors="ignore").copy()
 
-# ==================== 4. CHUẨN HÓA DỮ LIỆU ====================
+print("Các cột được sử dụng cho K-Means:")
+for i, col in enumerate(numeric_df.columns, 1):
+    print(f"{i:3}. {col}")
+print(f"\nTổng cộng: {len(numeric_df.columns)} cột được dùng.")
+
+# Chuyển toàn bộ cột về dạng số
+numeric_df = numeric_df.apply(pd.to_numeric, errors='coerce')
+
+# Điền toàn bộ giá trị N/A bằng 0
+numeric_df = numeric_df.fillna(0)
+print("✅ Đã thay toàn bộ giá trị N/A bằng 0.\n")
+
+# 3 Chuẩn hóa dữ liệu
 scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X_raw)
+X_scaled = scaler.fit_transform(numeric_df)
 
-# ==================== 5. TÌM K TỐI ƯU: ELBOW + SILHOUETTE ====================
-inertias, sil_scores = [], []
-K_range = range(2, 12)
+print(f" Dữ liệu đã được chuẩn hóa (StandardScaler). Tổng số đặc trưng: {X_scaled.shape[1]}\n")
 
-for k in K_range:
-    km = KMeans(n_clusters=k, random_state=42, n_init=40, max_iter=800)
-    km.fit(X_scaled)
-    inertias.append(km.inertia_)
-    sil_scores.append(silhouette_score(X_scaled, km.labels_))
+# 4️ Tìm số cụm tối ưu (Elbow & Silhouette)
 
-# VẼ BIỂU ĐỒ
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16,6))
+print(" Đang tìm số cụm tối ưu...")
 
-ax1.plot(K_range, inertias, 'bo-', linewidth=3)
-ax1.set_title('Phương pháp Elbow', fontsize=16)
-ax1.set_xlabel('k')
-ax1.grid(True, alpha=0.3)
+inertias = []
+sil_scores = []
+K = range(2, 11)
 
-ax2.plot(K_range, sil_scores, 'rs-', linewidth=3)
-ax2.set_title('Chỉ số Silhouette', fontsize=16)
-ax2.set_xlabel('k')
-ax2.grid(True, alpha=0.3)
+for k in K:
+    kmeans = KMeans(n_clusters=k, random_state=0, n_init=10)
+    kmeans.fit(X_scaled)
+    inertias.append(kmeans.inertia_)
+    labels = kmeans.labels_
+    sil_scores.append(silhouette_score(X_scaled, labels))
 
-best_k = 4  
-ax1.axvline(best_k, color='green', linestyle='--', linewidth=2)
-ax2.axvline(best_k, color='green', linestyle='--', linewidth=2)
+fig1, axes = plt.subplots(1, 2, figsize=(12, 5))
 
-plt.suptitle(f'Chọn số cụm tối ưu: {best_k}', fontsize=18)
+# Elbow Method
+axes[0].plot(K, inertias, 'o-', color='blue')
+axes[0].set_xlabel('Số cụm (k)')
+axes[0].set_ylabel('Inertia')
+axes[0].set_title('Elbow Method - Xác định số cụm tối ưu')
+
+# Silhouette Method
+axes[1].plot(K, sil_scores, 'o-', color='green')
+axes[1].set_xlabel('Số cụm (k)')
+axes[1].set_ylabel('Silhouette Score')
+axes[1].set_title('Silhouette Method - Đánh giá chất lượng cụm')
+
 plt.tight_layout()
 plt.show()
 
-print("\nSilhouette Scores:")
-for k, s in zip(K_range, sil_scores):
-    print(f"k={k}: {s:.4f}")
 
-# ==================== 6. CHẠY K-MEANS ====================
-kmeans = KMeans(n_clusters=best_k, random_state=42, n_init=40, max_iter=800)
-clusters = kmeans.fit_predict(X_scaled)
 
-df['Cluster'] = clusters
-df['Nhom'] = clusters
-
-# ==================== 7. LƯU FILE CSV ====================
-output_cols = ['Player', 'Squad', 'Nation', 'Pos', 'Age', 'Cluster']
-existing_cols = [c for c in output_cols if c in df.columns]
-
-df[existing_cols].to_csv("data/data_clusters.csv", index=False, encoding="utf-8-sig")
-
-print("\n✅ ĐÃ LƯU THÀNH CÔNG → data_clusters.csv")
-print("   Bao gồm:", ", ".join(existing_cols))
