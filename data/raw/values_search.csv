@@ -1,11 +1,11 @@
 ﻿player_name,transfer_value
-Joshua Acheampong,€15.2M
-Tyler Adams,€25.1M
+Joshua Acheampong,
+Tyler Adams,
 Tosin Adarabioyo,€23.5M
 Simon Adingra,€35.7M
 Emmanuel Agbadou,€23.9M
 Ola Aina,€25.8M
-Rayan Aït-Nouri,€45.5M
+Rayan Aït-Nouri,€2.5M
 Kristoffer Ajer,€21.5M
 Manuel Akanji,€28.6M
 Nathan Aké,€18.9M
@@ -39,7 +39,7 @@ Calvin Bassey,€24.9M
 Altay Bayındır,€10.7M
 Jan Bednarek,€8.3M
 Armel Bella Kotchap,€11M
-Jean-Ricner Bellegarde,€21.2M
+Jean-Ricner Bellegarde,€9.1M
 Rodrigo Bentancur,€26.5M
 Daniel Bentley,€1.2M
 Sander Berge,€28.7M
@@ -69,7 +69,7 @@ Moisés Caicedo,€84.4M
 Tom Cairney,€1.2M
 Jens Cajuste,€13.9M
 Riccardo Calafiori,€50.4M
-Dominic Calvert-Lewin,€17.7M
+Dominic Calvert-Lewin,€2.4M
 Diego Carlos,€6.7M
 Fabio Carvalho,€19.6M
 Casemiro,€7.7M
@@ -167,7 +167,7 @@ Andrés García,€10.3M
 Alejandro Garnacho,€58.1M
 James Garner,€20.8M
 Tyrique George,€17.3M
-Morgan Gibbs-White,€62.6M
+Morgan Gibbs-White,€51.3M
 Billy Gilmour,€23.8M
 Ben Godfrey,€5.2M
 João Gomes,€50.3M
@@ -184,7 +184,7 @@ Jacob Greaves,€19.7M
 Brajan Gruda,€29.4M
 Albert Grønbaek,€12.2M
 Gonçalo Guedes,€10.6M
-Marc Guéhi,
+Marc Guéhi,€42.5M
 Luis Guilherme,€23.7M
 Bruno Guimarães,€79.1M
 İlkay Gündoğan,€13.5M
@@ -288,7 +288,7 @@ Ryan Manning,€2.1M
 Solly March,€2.5M
 Omar Marmoush,€74.9M
 Gabriel Martinelli,€51.8M
-Emiliano Martínez,€18.9M
+Emiliano Martínez,€7M
 Lisandro Martínez,€42M
 Pape Matar Sarr,€43.7M
 Jean-Philippe Mateta,€30.9M
@@ -335,18 +335,18 @@ Eddie Nketiah,€21.4M
 Christopher Nkunku,€38.1M
 Matheus Nunes,€42.4M
 Darwin Núñez,€31.8M
-Ethan Nwaneri,
+Ethan Nwaneri,€74.3M
 Christian Nørgaard,€11.4M
 Jake O'Brien,€22.3M
 Matt O'Riley,€25M
 Dara O'Shea,€16.3M
-Chidozie Obi-Martin,€1.6M
+Chidozie Obi-Martin,€87.3M
 Wilson Odobert,€28.4M
 Chiedozie Ogbene,€5.9M
 Caleb Okoli,€13M
 Robin Olsen,€0.8M
 Amadou Onana,€60.6M
-André Onana,€27.4M
+André Onana,€60.6M
 Paul Onuachu,€4.5M
 Stefan Ortega,€6.5M
 William Osula,€10.3M
@@ -412,7 +412,7 @@ Jota Silva,€18.6M
 Jahmai Simpson-Pusey,€5.3M
 Luis Sinisterra,€16.5M
 Oliver Skipp,€11.5M
-William Smallbone,
+William Smallbone,€2.7M
 Adam Smith,€0.9M
 Emile Smith Rowe,€37.3M
 Dominic Solanke,€47.8M
@@ -468,13 +468,13 @@ Micky van de Ven,€61.1M
 Bart Verbruggen,€42.3M
 Jannik Vestergaard,€1.6M
 Guglielmo Vicario,€40.5M
-Kyle Walker,
-Kyle Walker-Peters,€18.8M
+Kyle Walker,€4.1M
+Kyle Walker-Peters,€4.1M
 Christian Walton,€0.8M
-Aaron Wan-Bissaka,€25M
+Aaron Wan-Bissaka,€1.1M
 Danny Ward,€0.8M
-James Ward-Prowse,€7.7M
-James Ward-Prowse,€7.7M
+James Ward-Prowse,€0.7M
+James Ward-Prowse,€0.7M
 Ollie Watkins,€64.6M
 Adam Webster,€7.7M
 Danny Welbeck,€4.3M
@@ -491,7 +491,7 @@ Harry Wilson,€14M
 Harry Winks,€4.6M
 Yoane Wissa,€25.5M
 Chris Wood,€6.8M
-Nathan Wood-Gordon,€1.8M
+Nathan Wood-Gordon,€4.1M
 Luke Woolfenden,€1.8M
 Yehor Yarmoliuk,€21.2M
 Ryan Yates,€14.4M

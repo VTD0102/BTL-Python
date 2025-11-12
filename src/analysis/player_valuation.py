@@ -18,7 +18,7 @@ def create_connection():
 def load_stats():
     """Đọc bảng stats và chuyển đổi numeric an toàn"""
     conn = create_connection()
-    df = pd.read_sql_query("SELECT * FROM stats;", conn)
+    df = pd.read_sql_query("SELECT * FROM player_stats;", conn)
     conn.close()
 
     # ✅ convert tất cả cột (trừ Player/Squad/Pos) về số
