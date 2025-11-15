@@ -12,34 +12,34 @@ def lookup_player(name):
     url = f"{API_URL}/player?name={name}"
     r = requests.get(url)
     if r.status_code != 200:
-        print(f"❌ Lỗi HTTP {r.status_code}: {r.text}")
+        print(f"Lỗi HTTP {r.status_code}: {r.text}")
         return
     data = r.json()
     if not data:
-        print(f"⚠️ Không tìm thấy cầu thủ {name}")
+        print(f"Không tìm thấy cầu thủ {name}")
         return
     df = pd.DataFrame(data)
     output = os.path.join(RESULT_DIR, f"{name}_lookup.csv")
     df.to_csv(output, index=False, encoding="utf-8-sig")
     print(df.head(10))
-    print(f"✅ Kết quả đã lưu: {output}")
+    print(f"Kết quả đã lưu: {output}")
 
 def lookup_club(club):
-    print(f"🏟️ Tra cứu câu lạc bộ: {club}")
-    url = f"{API_URL}/club?club={club}"  # ✅ CHỈNH Ở ĐÂY
+    print(f"Tra cứu câu lạc bộ: {club}")
+    url = f"{API_URL}/club?club={club}"
     r = requests.get(url)
     if r.status_code != 200:
-        print(f"❌ Lỗi HTTP {r.status_code}: {r.text}")
+        print(f"Lỗi HTTP {r.status_code}: {r.text}")
         return
     data = r.json()
     if not data:
-        print(f"⚠️ Không tìm thấy CLB {club}")
+        print(f" Không tìm thấy CLB {club}")
         return
     df = pd.DataFrame(data)
     output = os.path.join(RESULT_DIR, f"{club.replace(' ', '_')}_lookup.csv")
     df.to_csv(output, index=False, encoding="utf-8-sig")
     print(df.head(10))
-    print(f"✅ Kết quả đã lưu: {output}")
+    print(f"Kết quả đã lưu: {output}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tra cứu dữ liệu cầu thủ hoặc CLB từ API")
@@ -52,4 +52,4 @@ if __name__ == "__main__":
     elif args.club:
         lookup_club(args.club)
     else:
-        print("⚠️ Hãy truyền thêm --name hoặc --club")
+        print("Hãy truyền thêm --name hoặc --club")

@@ -17,13 +17,10 @@ from sklearn.metrics import mean_absolute_error, r2_score
 
 
 # ===============================================================
-# 1️⃣ KẾT NỐI DATABASE
+# 1. KẾT NỐI DATABASE
 # ===============================================================
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DB_PATH = os.path.join(BASE_DIR, "data", "stats.db")
-
-print(f"📂 Database path: {DB_PATH}")
-
 conn = sqlite3.connect(DB_PATH)
 query = """
 SELECT 
@@ -48,11 +45,11 @@ ON s.Player = v.player_name
 df = pd.read_sql_query(query, conn)
 conn.close()
 
-print(f"📊 Đã đọc {len(df)} cầu thủ từ database.")
+print(f"Đã đọc {len(df)} cầu thủ từ database.")
 
 
 # ===============================================================
-# 2️⃣ TIỀN XỬ LÝ DỮ LIỆU
+# 2. TIỀN XỬ LÝ DỮ LIỆU
 # ===============================================================
 def parse_value(v):
     if pd.isna(v):
@@ -61,34 +58,29 @@ def parse_value(v):
         return float(v.replace("€", "").replace("M", "").strip())
     except:
         return np.nan
-
 df["transfer_value_num"] = df["transfer_value"].apply(parse_value)
 df = df.dropna(subset=["transfer_value_num"])
 
-# 🧹 Làm sạch dữ liệu: chuyển "N/A" → NaN → 0 và ép kiểu số
 numeric_cols = ["Age", "Min", "Gls", "Ast", "xG", "xAG", "PrgP", "Tkl", "Int", "Cmp%"]
 for col in numeric_cols:
     df[col] = pd.to_numeric(df[col], errors="coerce")
-
-# Thay NaN thành 0
 df[numeric_cols] = df[numeric_cols].fillna(0)
 
-# Giữ lại các cột cần thiết
 features = numeric_cols + ["Pos", "Squad"]
 X = df[features]
 y = df["transfer_value_num"]
 
-print(f"✅ Dữ liệu sẵn sàng với {X.shape[0]} cầu thủ và {X.shape[1]} đặc trưng.")
+print(f"Dữ liệu sẵn sàng với {X.shape[0]} cầu thủ và {X.shape[1]} đặc trưng.")
 
 
 # ===============================================================
-# 3️⃣ CHIA TRAIN / TEST
+# 3. CHIA TRAIN / TEST
 # ===============================================================
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 
 # ===============================================================
-# 4️⃣ PIPELINE TIỀN XỬ LÝ
+# 4. PIPELINE TIỀN XỬ LÝ
 # ===============================================================
 num_cols = ["Age", "Min", "Gls", "Ast", "xG", "xAG", "PrgP", "Tkl", "Int", "Cmp%"]
 cat_cols = ["Pos", "Squad"]
@@ -100,24 +92,22 @@ preprocess = ColumnTransformer([
 
 
 # ===============================================================
-# 5️⃣ HUẤN LUYỆN MÔ HÌNH
+# 5. HUẤN LUYỆN MÔ HÌNH
 # ===============================================================
 model = RandomForestRegressor(n_estimators=400, max_depth=10, random_state=42)
 pipeline = Pipeline([("preprocess", preprocess), ("model", model)])
-
-print("\n🚀 Đang huấn luyện mô hình định giá ...")
 pipeline.fit(X_train, y_train)
 
 y_pred = pipeline.predict(X_test)
 mae = mean_absolute_error(y_test, y_pred)
 r2 = r2_score(y_test, y_pred)
 
-print(f"📈 Sai số MAE: {mae:.2f} M€")
-print(f"📊 Hệ số R²: {r2:.3f}")
+print(f"Sai số MAE: {mae:.2f} M€")
+print(f"Hệ số R²: {r2:.3f}")
 
 
 # ===============================================================
-# 6️⃣ DỰ ĐOÁN & SO SÁNH
+# 6. DỰ ĐOÁN & SO SÁNH
 # ===============================================================
 df["Predicted_Value"] = pipeline.predict(X)
 df["Difference"] = df["Predicted_Value"] - df["transfer_value_num"]
@@ -129,37 +119,36 @@ os.makedirs(raw_dir, exist_ok=True)
 csv_path = os.path.join(raw_dir, "predicted_values.csv")
 df.to_csv(csv_path, index=False, encoding="utf-8-sig")
 
-print(f"\n💾 Đã lưu kết quả sang: {csv_path}")
+print(f"\nĐã lưu kết quả sang: {csv_path}")
 
 
 # ===============================================================
-# 7️⃣ TỔNG HỢP KẾT QUẢ
+# 7. TỔNG HỢP KẾT QUẢ
 # ===============================================================
 overall_mae = df["Abs_Error"].mean()
 avg_diff = df["Difference"].mean()
 
-print("\n📊 ===== Tổng hợp =====")
-print(f"👉 MAE trung bình: {overall_mae:.2f} M€")
-print(f"👉 Chênh lệch trung bình: {avg_diff:.2f} M€")
+print("\n===== Tổng hợp =====")
+print(f"MAE trung bình: {overall_mae:.2f} M€")
+print(f"Chênh lệch trung bình: {avg_diff:.2f} M€")
 
 top_over = df.nlargest(5, "Difference")[["Player", "Squad", "Pos", "transfer_value_num", "Predicted_Value", "Difference"]]
 top_under = df.nsmallest(5, "Difference")[["Player", "Squad", "Pos", "transfer_value_num", "Predicted_Value", "Difference"]]
 
-print("\n⚡ Top 5 cầu thủ được định giá CAO hơn thực tế:")
+print("\nTop 5 cầu thủ được định giá cao hơn thực tế:")
 print(top_over.to_string(index=False))
-print("\n⚡ Top 5 cầu thủ được định giá THẤP hơn thực tế:")
+
+print("\nTop 5 cầu thủ được định giá thấp hơn thực tế:")
 print(top_under.to_string(index=False))
-
-
 # ===============================================================
-# 8️⃣ BIỂU ĐỒ
+# 8. BIỂU ĐỒ
 # ===============================================================
 plt.figure(figsize=(6, 6))
-plt.scatter(df["transfer_value_num"], df["Predicted_Value"], alpha=0.7, color="#1f77b4")
+plt.scatter(df["transfer_value_num"], df["Predicted_Value"], alpha=0.7)
 plt.plot([0, max(df["transfer_value_num"])], [0, max(df["transfer_value_num"])], "r--")
 plt.xlabel("Giá trị thực (€M)")
 plt.ylabel("Giá trị dự đoán (€M)")
-plt.title("⚽ So sánh Giá trị Thực tế vs Dự đoán (Pretend Valuation)")
+plt.title("So sánh Giá trị Thực tế vs Dự đoán")
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.show()

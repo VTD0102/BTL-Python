@@ -1,9 +1,4 @@
 Metric,BestTeam
-Age,West Ham
-Born,Chelsea
-MP,Nott'ham Forest
-Starts,Arsenal
-Min,Nott'ham Forest
 90s,Nott'ham Forest
 Gls,Liverpool
 Ast,Liverpool
@@ -11,8 +6,6 @@ G+A,Liverpool
 G-PK,Liverpool
 PK,Liverpool
 PKatt,Liverpool
-CrdY,Nott'ham Forest
-CrdR,Arsenal
 xG,Liverpool
 npxG,Liverpool
 xAG,Liverpool
@@ -23,17 +16,59 @@ PrgR,Liverpool
 Gls.1,Manchester City
 Ast.1,Liverpool
 G+A.1,Arsenal
-G-PK.1,Manchester City
+G-PK.1,Arsenal
 G+A-PK,Arsenal
 xG.1,Bournemouth
 xAG.1,Chelsea
-xG+xAG,Liverpool
+xG+xAG,Bournemouth
 npxG.1,Bournemouth
-npxG+xAG.1,Liverpool
+npxG+xAG.1,Bournemouth
+GA,Leicester City
+GA90,Leicester City
+SoTA,Brentford
+Saves,Brentford
+Save%,Bournemouth
+W,Liverpool
+D,Everton
+L,Southampton
+CS,Arsenal
+CS%,Brentford
+PKA,Brighton
+PKsv,Everton
+PKm,Arsenal
+Save%.1,Everton
+FK,Arsenal
+CK,Wolves
+OG,Tottenham
+PSxG,Southampton
+PSxG/SoT,Bournemouth
+PSxG+/-,Bournemouth
+/90,Bournemouth
+Cmp,Everton
+Att,Everton
+Cmp%,Bournemouth
+Att (GK),Brentford
+Thr,Newcastle Utd
+Launch%,Bournemouth
+AvgLen,Bournemouth
+Att.1,Crystal Palace
+Launch%.1,Leicester City
+AvgLen.1,Leicester City
+Opp,Nott'ham Forest
+Stp,Arsenal
+Stp%,Ipswich Town
+#OPA,Newcastle Utd
+#OPA/90,Wolves
+AvgDist,Wolves
 Sh,Liverpool
 SoT,Liverpool
+SoT%,Nott'ham Forest
 Sh/90,Bournemouth
 SoT/90,Bournemouth
+G/Sh,Arsenal
+G/SoT,Arsenal
+Dist,Nott'ham Forest
+npxG/Sh,Arsenal
 G-xG,Nott'ham Forest
 np:G-xG,Nott'ham Forest
 TotDist,Liverpool
@@ -45,6 +80,7 @@ Att.2,Liverpool
 Cmp%.2,Manchester City
 Cmp.3,Everton
 Att.3,Everton
+Cmp%.3,Liverpool
 xA,Liverpool
 A-xAG,Arsenal
 KP,Liverpool
@@ -60,7 +96,6 @@ TI,Liverpool
 In,Arsenal
 Out,Fulham
 Str,Newcastle Utd
-Off,Nott'ham Forest
 Blocks,Tottenham
 SCA,Liverpool
 SCA90,Liverpool
@@ -83,6 +118,7 @@ Def 3rd,Nott'ham Forest
 Mid 3rd,Crystal Palace
 Att 3rd,Arsenal
 Tkl.1,Nott'ham Forest
+Tkl%,Nott'ham Forest
 Lost,Nott'ham Forest
 Pass,Crystal Palace
 Int,Everton
@@ -93,16 +129,19 @@ Touches,Liverpool
 Def Pen,Brentford
 Att Pen,Liverpool
 Succ,Manchester City
+Succ%,Arsenal
 Tkld,Tottenham
+Tkld%,Crystal Palace
 Carries,Manchester City
 CPA,Manchester City
-Mis,Nott'ham Forest
 Dis,Newcastle Utd
 Rec,Manchester City
 Mn/MP,Manchester City
 Min%,Nott'ham Forest
+Mn/Start,Manchester City
 Compl,Everton
 Subs,Fulham
+Mn/Sub,Aston Villa
 unSub,Chelsea
 PPM,Liverpool
 onG,Liverpool
@@ -113,9 +152,8 @@ onxG,Liverpool
 onxGA,Southampton
 xG+/-,Liverpool
 xG+/-90,Liverpool
-2CrdY,Arsenal
 Fls,Bournemouth
 PKwon,Bournemouth
-PKcon,Wolves
 Recov,Crystal Palace
 Won,Brentford
+Won%,Brentford
