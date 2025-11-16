@@ -11,15 +11,17 @@ from sklearn.metrics import silhouette_score
 from mpl_toolkits.mplot3d import Axes3D
 import warnings
 warnings.filterwarnings("ignore")
-
-# 1️ Đọc dữ liệu
+import os
+# 1 Đọc dữ liệu
 print(" Đang tải dữ liệu từ cơ sở dữ liệu SQLite...")
 
-conn = sqlite3.connect("data/stats.db")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DB_PATH = os.path.join(BASE_DIR, "data", "stats.db")
+conn = sqlite3.connect(DB_PATH)
 df = pd.read_sql_query("SELECT * FROM PLAYER_STATS", conn)
 conn.close()
 
-print(f"✅ Đã đọc {len(df)} cầu thủ, {len(df.columns)} cột dữ liệu.\n")
+print(f"Đã đọc {len(df)} cầu thủ, {len(df.columns)} cột dữ liệu.\n")
 
 # 2️ Tiền xử lý dữ liệu
 # Loại bỏ các cột không dùng cho phân cụm
@@ -46,7 +48,7 @@ numeric_df = numeric_df.apply(pd.to_numeric, errors='coerce')
 
 # Điền toàn bộ giá trị N/A bằng 0
 numeric_df = numeric_df.fillna(0)
-print("✅ Đã thay toàn bộ giá trị N/A bằng 0.\n")
+print("Đã thay toàn bộ giá trị N/A bằng 0.\n")
 
 # 3 Chuẩn hóa dữ liệu
 scaler = StandardScaler()
@@ -54,7 +56,7 @@ X_scaled = scaler.fit_transform(numeric_df)
 
 print(f" Dữ liệu đã được chuẩn hóa (StandardScaler). Tổng số đặc trưng: {X_scaled.shape[1]}\n")
 
-# 4️ Tìm số cụm tối ưu (Elbow & Silhouette)
+# 4 Tìm số cụm tối ưu (Elbow & Silhouette)
 
 print(" Đang tìm số cụm tối ưu...")
 

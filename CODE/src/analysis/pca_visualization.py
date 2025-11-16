@@ -2,6 +2,7 @@ import sqlite3
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 import seaborn as sns
 import plotly.express as px
 from sklearn.preprocessing import StandardScaler
@@ -14,14 +15,15 @@ warnings.filterwarnings("ignore")
 
 # 1️ Đọc dữ liệu
 print("Đang tải dữ liệu từ cơ sở dữ liệu SQLite...")
-
-conn = sqlite3.connect("data/stats.db")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DB_PATH = os.path.join(BASE_DIR, "data", "stats.db")
+conn = sqlite3.connect(DB_PATH)
 df = pd.read_sql_query("SELECT * FROM PLAYER_STATS", conn)
 conn.close()
 
-print(f"✅ Đã đọc {len(df)} cầu thủ, {len(df.columns)} cột dữ liệu.\n")
+print(f"Đã đọc {len(df)} cầu thủ, {len(df.columns)} cột dữ liệu.\n")
 
-# 2️ Tiền xử lý dữ liệu
+# 2 Tiền xử lý dữ liệu
 # Loại bỏ các cột không dùng cho phân cụm
 drop_cols = [    'Player', 'Squad', 'Nation', 'Pos', 'Born', 'Matches',
     'Age', 'MP', 'Starts', 'Min', '90s',
@@ -41,7 +43,7 @@ numeric_df = numeric_df.apply(pd.to_numeric, errors='coerce')
 # Điền toàn bộ giá trị N/A bằng 0
 numeric_df = numeric_df.fillna(0)
 
-# 3️ Chuẩn hóa dữ liệu
+# 3 Chuẩn hóa dữ liệu
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(numeric_df)
 
@@ -93,6 +95,6 @@ existing_cols = [c for c in output_cols if c in df.columns]
 
 df[existing_cols].to_csv("data/data_clusters.csv", index=False, encoding="utf-8-sig")
 
-print("\n✅ ĐÃ LƯU THÀNH CÔNG → clusters.csv")
+print("\nĐÃ LƯU THÀNH CÔNG → clusters.csv")
 print("   Bao gồm:", ", ".join(existing_cols))
 

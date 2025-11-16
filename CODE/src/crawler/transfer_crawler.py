@@ -97,7 +97,7 @@ def get_transfer_value(driver, player_name: str):
 
 
 # =============================================================
-# ✅ MAIN CRAWL
+# MAIN CRAWL
 # =============================================================
 def scrape_value_for_player_list(players: list, delay: float = 1.0):
     driver = get_driver()
@@ -157,5 +157,5 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # 4) Crawl
-    print("\n---BẮT ĐẦU CRAWL---")
+    print("\nBẮT ĐẦU CRAWL")
     scrape_value_for_player_list(player_list)
