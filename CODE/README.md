@@ -1,7 +1,7 @@
-📘 BÀI TẬP LỚN – Lập Trình Với Python
+BÀI TẬP LỚN – Lập Trình Với Python
 Phân tích dữ liệu cầu thủ Premier League 2024–2025
-🎓 Học Viện Công Nghệ Bưu Chính Viễn Thông – PTIT
-📍 Khoa Công Nghệ Thông Tin
+Học Viện Công Nghệ Bưu Chính Viễn Thông – PTIT
+Khoa Công Nghệ Thông Tin
 
 Giảng viên hướng dẫn: Kim Ngọc Bách
 
@@ -11,7 +11,7 @@ Họ và tên	MSSV
 Vũ Trung Đức	B23DCKH030
 Ngô Văn Phương	B23DCKH086
 Lê Việt Hoàng	B23DCKH044
-📂 Cấu trúc thư mục dự án
+Cấu trúc thư mục dự án
 
 Dự án được tổ chức đúng chuẩn theo yêu cầu BTL:
 
@@ -47,7 +47,7 @@ BTL-PYTHON/
 │
 └── README.md
 
-🧩 I. THU THẬP DỮ LIỆU (4 điểm)
+I. THU THẬP DỮ LIỆU (4 điểm)
 I.1 Crawl dữ liệu thống kê từ FBref
 
 Thu thập dữ liệu tất cả cầu thủ thi đấu > 90 phút EPL 2024–2025
@@ -58,7 +58,7 @@ Kết hợp thành một bảng duy nhất → PLAYER_STATS trong stats.db
 
 Xuất file CSV: /CODE/data/raw/player_stats.csv
 
-🏷️ Chạy:
+Chạy:
 python -m CODE.src.crawler.fbref_crawler
 
 I.2 Crawl giá chuyển nhượng từ FootballTransfers
@@ -71,16 +71,16 @@ Nếu không có → "N/A"
 
 Lưu vào bảng PLAYER_VALUES
 
-🏷️ Chạy:
+Chạy:
 python -m CODE.src.crawler.transfer_crawler
 
-🧩 II. XÂY DỰNG API & TRA CỨU (2 điểm)
-II.1 Flask REST API
-✔ Các endpoint:
+II. XÂY DỰNG API & TRA CỨU (2 điểm)
+II.1 Flask REST API 
+Các endpoint:
 Endpoint	Mô tả
 /player?name=	Tra cứu theo tên cầu thủ
 /club?club=	Tra cứu theo tên câu lạc bộ
-🏷️ Chạy server:
+Chạy server:
 python -m CODE.src.api.app
 
 
@@ -89,10 +89,10 @@ API mặc định chạy tại:
 http://127.0.0.1:5000
 
 II.2 Tool tra cứu qua dòng lệnh (lookup)
-🏷️ Tra cứu cầu thủ:
+Tra cứu cầu thủ:
 python -m CODE.src.api.lookup --name "Haaland"
 
-🏷️ Tra cứu CLB:
+Tra cứu CLB:
 python -m CODE.src.api.lookup --club "Manchester City"
 
 
@@ -102,7 +102,7 @@ In bảng ra terminal
 
 Lưu file CSV vào CODE/data/lookup_results/
 
-🧩 III. PHÂN TÍCH THỐNG KÊ (2 điểm)
+III. PHÂN TÍCH THỐNG KÊ (2 điểm)
 III.1 Tính median – mean – std theo từng đội
 
 Tính thống kê từng chỉ số của mỗi đội
@@ -113,10 +113,9 @@ Tìm đội mạnh nhất theo từng chỉ số
 
 Tính đội có phong độ tổng thể tốt nhất EPL
 
-🏷️ Chạy:
+Chạy:
 python -m CODE.src.analysis.stats_analysis
-
-📁 Output:
+Output:
 
 team_summary_stats.csv
 
@@ -136,16 +135,16 @@ Tính sai số MAE, R²
 
 Xuất bảng giá trị dự đoán
 
-🏷️ Chạy:
+Chạy:
 python -m CODE.src.analysis.pretend_valuation
 
-📁 Output:
+Output:
 
 predicted_values.csv
 
 Biểu đồ value_actual vs value_predicted
 
-🧩 IV. PHÂN CỤM & TRỰC QUAN (2 điểm)
+IV. PHÂN CỤM & TRỰC QUAN (2 điểm)
 IV.1 Phân cụm K-Means
 
 Chuẩn hóa dữ liệu
@@ -156,7 +155,7 @@ Vẽ Elbow + Silhouette
 
 Quyết định chọn K = 4
 
-🏷️ Chạy:
+Chạy:
 python -m CODE.src.analysis.clustering_kmeans
 
 IV.2 Visualization PCA 2D & 3D
@@ -167,7 +166,7 @@ Vẽ scatter plot 2D (Matplotlib)
 
 Vẽ 3D interactive (Plotly)
 
-🏷️ Chạy:
+Chạy:
 python -m CODE.src.analysis.pca_visualization
 
 🚀 Hướng dẫn cài đặt
