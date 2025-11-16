@@ -30,7 +30,7 @@ def get_player_by_name():
     name = request.args.get("name", "").strip()
     if not name:
         return jsonify({"error": "Thiếu tham số ?name=<tên cầu thủ>"}), 400
-    query = "SELECT * FROM player_full_stats_vectorlite WHERE Player LIKE ? COLLATE NOCASE"
+    query = "SELECT * FROM PLAYER_STATS WHERE Player LIKE ? COLLATE NOCASE"
     results = query_db(query, (f"%{name}%",))
     if not results:
         return jsonify([]), 200
