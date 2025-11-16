@@ -1,276 +1,225 @@
 📘 BÀI TẬP LỚN – Lập Trình Với Python
-Phân tích dữ liệu cầu thủ EPL 2024–2025
-🎓 Học viện Công nghệ Bưu chính Viễn thông – PTIT
-📍 Khoa Công nghệ Thông tin
+Phân tích dữ liệu cầu thủ Premier League 2024–2025
+🎓 Học Viện Công Nghệ Bưu Chính Viễn Thông – PTIT
+📍 Khoa Công Nghệ Thông Tin
 
 Giảng viên hướng dẫn: Kim Ngọc Bách
+
 Nhóm thực hiện: 18
 
 Họ và tên	MSSV
 Vũ Trung Đức	B23DCKH030
 Ngô Văn Phương	B23DCKH086
 Lê Việt Hoàng	B23DCKH044
-📌 Giới thiệu chung
+📂 Cấu trúc thư mục dự án
 
-Bài tập lớn yêu cầu xây dựng hệ thống thu thập – phân tích – tra cứu – trực quan hóa dữ liệu cầu thủ Premier League mùa 2024–2025 với Python, bao gồm:
+Dự án được tổ chức đúng chuẩn theo yêu cầu BTL:
 
-✔ Web crawling (Selenium / undetected_chromedriver)
-✔ Lưu trữ SQLite
-✔ Flask REST API
-✔ Tra cứu qua terminal
-✔ Phân tích thống kê – median/mean/std
-✔ Định giá cầu thủ bằng học máy (Random Forest Regression)
-✔ Phân cụm K-Means + trực quan PCA
-
-📂 Cấu trúc thư mục (đề xuất)
-BTL-Python/
+BTL-PYTHON/
+│
+├── Báo cáo/
+│   └── Báo cáo bài tập lớn.pdf
 │
 ├── CODE/
-│   ├── src/
-│   │   ├── crawler/         # Thu thập dữ liệu FBref + FootballTransfers
-│   │   ├── api/             # Flask API + lookup tool
-│   │   ├── analysis/        # Thống kê, ML valuation, KMeans, PCA
-│   │   └── database/        # Tạo DB, merge bảng
-│   └── ...
+│   ├── data/
+│   │   ├── raw/
+│   │   │   └── player_stats.csv
+│   │   ├── lookup_results/          # Lưu kết quả tra cứu
+│   │   ├── predicted_values.csv
+│   │   ├── best_team_each_metric.csv
+│   │   ├── team_summary_stats.csv
+│   │   └── stats.db                  # SQLite database
+│   │
+│   └── src/
+│       ├── crawler/
+│       │   ├── fbref_crawler.py      # Crawl stats FBref
+│       │   └── transfer_crawler.py   # Crawl giá chuyển nhượng
+│       │
+│       ├── api/
+│       │   ├── app.py                # Flask REST API
+│       │   └── lookup.py             # Tool tra cứu CLI
+│       │
+│       └── analysis/
+│           ├── stats_analysis.py     # Median/mean/std + best team
+│           ├── pretend_valuation.py  # ML định giá cầu thủ
+│           ├── clustering_kmeans.py  # KMeans phân cụm
+│           └── pca_visualization.py  # PCA 2D/3D visualization
 │
-├── data/
-│   ├── stats.db             # CSDL SQLite chính
-│   ├── raw/                 # CSV gốc sau khi crawl FBref
-│   └── lookup_results/      # Kết quả tra cứu
-│
-└── REPORT/
-    └── BTL_Python_Report.pdf
+└── README.md
 
 🧩 I. THU THẬP DỮ LIỆU (4 điểm)
-I.1 – Thu thập thống kê cầu thủ từ FBref
-✔ Yêu cầu:
+I.1 Crawl dữ liệu thống kê từ FBref
 
-Lấy toàn bộ chỉ số cầu thủ thi đấu > 90 phút tại EPL 2024–2025.
+Thu thập dữ liệu tất cả cầu thủ thi đấu > 90 phút EPL 2024–2025
 
-Crawl từ các bảng: stats, shooting, passing, possession, defense, misc, gca, playing time…
+Crawl từ 11 bảng thống kê (stats, shooting, passing, defense, possession, misc, keepers, …)
 
-Gộp thành một bảng duy nhất → lưu vào SQLite (PLAYER_STATS).
+Kết hợp thành một bảng duy nhất → PLAYER_STATS trong stats.db
 
-Chỉ số không tồn tại → để "N/A".
+Xuất file CSV: /CODE/data/raw/player_stats.csv
 
-✔ Kỹ thuật & Thư viện:
+🏷️ Chạy:
+python -m CODE.src.crawler.fbref_crawler
 
-undetected_chromedriver, selenium, BeautifulSoup
+I.2 Crawl giá chuyển nhượng từ FootballTransfers
 
-pandas, sqlite3
+Tìm kiếm từng cầu thủ theo tên
 
-Chống captcha / rate-limit:
+Thu thập giá trị chuyển nhượng (VD: €78M)
 
-Random sleep 3–6s
+Nếu không có → "N/A"
 
-Stealth Chrome
+Lưu vào bảng PLAYER_VALUES
 
-Retry 2 lần khi Timeout
+🏷️ Chạy:
+python -m CODE.src.crawler.transfer_crawler
 
-✔ Output:
+🧩 II. XÂY DỰNG API & TRA CỨU (2 điểm)
+II.1 Flask REST API
+✔ Các endpoint:
+Endpoint	Mô tả
+/player?name=	Tra cứu theo tên cầu thủ
+/club?club=	Tra cứu theo tên câu lạc bộ
+🏷️ Chạy server:
+python -m CODE.src.api.app
 
-SQLite table: PLAYER_STATS
 
-CSV: data/raw/player_stats.csv
+API mặc định chạy tại:
 
-I.2 – Thu thập giá trị chuyển nhượng từ FootballTransfers
-✔ Yêu cầu:
+http://127.0.0.1:5000
 
-Tìm kiếm từng cầu thủ từ bảng PLAYER_STATS.
+II.2 Tool tra cứu qua dòng lệnh (lookup)
+🏷️ Tra cứu cầu thủ:
+python -m CODE.src.api.lookup --name "Haaland"
 
-Thu thập trường player-tag chứa giá trị chuyển nhượng (VD: “€85M”).
+🏷️ Tra cứu CLB:
+python -m CODE.src.api.lookup --club "Manchester City"
 
-Nếu không có: "N/A"
 
-Lưu vào bảng SQLite PLAYER_VALUES.
+Kết quả:
 
-✔ Kỹ thuật:
+In bảng ra terminal
 
-Selenium + Stealth Mode (selenium_stealth)
-
-WebDriverWait để tránh lỗi tải trang
-
-✔ Output:
-
-PLAYER_VALUES
-
-value_lookup.csv (tùy chọn)
-
-🧩 II. API TRA CỨU DỮ LIỆU (2 điểm)
-II.1 – Flask REST API
-✔ Endpoint hỗ trợ:
-Endpoint	Chức năng
-/player?name=<tên>	Trả về toàn bộ chỉ số của 1 cầu thủ
-/club?club=<CLB>	Trả về toàn bộ danh sách cầu thủ của CLB
-✔ Công nghệ:
-
-Flask
-
-SQLite
-
-Query helper: query_db() trả về list of dict để jsonify dễ dàng.
-
-II.2 – Công cụ tra cứu qua terminal
-Câu lệnh chạy:
-python lookup.py --name "Haaland"
-python lookup.py --club "Manchester City"
-
-✔ Output:
-
-In bảng ra màn hình
-
-Lưu file CSV vào data/lookup_results/
-
-VD: Haaland_lookup.csv, Manchester_City_lookup.csv
+Lưu file CSV vào CODE/data/lookup_results/
 
 🧩 III. PHÂN TÍCH THỐNG KÊ (2 điểm)
-III.1 – Median, Mean, Std theo từng đội
-✔ Yêu cầu:
+III.1 Tính median – mean – std theo từng đội
 
-Tính median – mean – std của mọi chỉ số per–team.
+Tính thống kê từng chỉ số của mỗi đội
 
-Xuất file CSV:
+Loại bỏ chỉ số tiêu cực
+
+Tìm đội mạnh nhất theo từng chỉ số
+
+Tính đội có phong độ tổng thể tốt nhất EPL
+
+🏷️ Chạy:
+python -m CODE.src.analysis.stats_analysis
+
+📁 Output:
 
 team_summary_stats.csv
 
 best_team_each_metric.csv
 
-Tìm đội mạnh nhất theo từng chỉ số
+III.2 Định giá cầu thủ bằng Machine Learning
 
-Tính đội phong độ tổng thể tốt nhất EPL 2024–2025.
+Dùng RandomForestRegressor
 
-✔ Phương pháp:
+Feature gồm thống kê cầu thủ + vị trí + đội bóng
 
-Drop các cột không liên quan (Player, Age, Min, Pos…)
+Chuẩn hóa numeric + OneHotEncode categorical
 
-Ép toàn bộ numerical column → numeric
+Train/test split
 
-Loại chỉ số tiêu cực (foul, lỗi, mất bóng…)
+Tính sai số MAE, R²
 
-Chỉ giữ metric tích cực để đánh giá
+Xuất bảng giá trị dự đoán
 
-III.2 – Phương pháp tự động định giá cầu thủ
-✔ Pipeline dự đoán giá trị:
+🏷️ Chạy:
+python -m CODE.src.analysis.pretend_valuation
 
-Feature engineering:
-
-Stats: Gls, Ast, xG, xAG, PrgP, Tkl, Int, Cmp%, Age, Min…
-
-Categorical: Pos, Squad (OneHot)
-
-Chuẩn hóa: StandardScaler
-
-Thuật toán: RandomForestRegressor
-
-Đánh giá:
-
-MAE
-
-R²
-
-Vẽ biểu đồ predicted vs actual
-
-✔ Output:
+📁 Output:
 
 predicted_values.csv
 
-Biểu đồ scatter
+Biểu đồ value_actual vs value_predicted
 
-🧩 IV. PHÂN CỤM VÀ TRỰC QUAN (2 điểm)
-IV.1 – K-means Clustering
-✔ Quy trình:
+🧩 IV. PHÂN CỤM & TRỰC QUAN (2 điểm)
+IV.1 Phân cụm K-Means
 
-Làm sạch & chuẩn hóa dữ liệu
+Chuẩn hóa dữ liệu
 
-Chọn K dựa trên:
+Chạy K từ 2 → 10
 
-Elbow → K = 4
+Vẽ Elbow + Silhouette
 
-Silhouette → K = 2 nhưng không hiệu quả
+Quyết định chọn K = 4
 
-Quyết định chọn K = 4 để phân loại chi tiết hơn.
+🏷️ Chạy:
+python -m CODE.src.analysis.clustering_kmeans
 
-✔ Nhận xét 4 nhóm:
+IV.2 Visualization PCA 2D & 3D
 
-Nhóm 1 – Thủ môn
+PCA giảm chiều để trực quan hóa
 
-Nhóm 2 – Hậu vệ / tiền vệ trụ (phòng ngự mạnh)
+Vẽ scatter plot 2D (Matplotlib)
 
-Nhóm 3 – Tiền đạo / cầu thủ tấn công (Gls, Ast cao)
+Vẽ 3D interactive (Plotly)
 
-Nhóm 4 – Tiền vệ đa năng (balanced)
+🏷️ Chạy:
+python -m CODE.src.analysis.pca_visualization
 
-IV.2 – PCA Visualization
-✔ Mục tiêu:
-
-Giảm chiều → 2D và 3D
-
-Vẽ scatter plot:
-
-Matplotlib (2D)
-
-Plotly (3D)
-
-✔ Output:
-
-pca_2d.png
-
-pca_3d.html (interactive)
-
-📝 Hướng dẫn chạy chương trình
-1️⃣ Cài đặt môi trường
+🚀 Hướng dẫn cài đặt
+1) Tạo môi trường
 pip install -r requirements.txt
 
-2️⃣ Crawl dữ liệu
-python -m CODE.src.crawler.fbref_crawler
-python -m CODE.src.crawler.value_crawler
-
-3️⃣ Chạy Flask API
-python -m CODE.src.api.app
-
-4️⃣ Tra cứu
-python -m CODE.src.api.lookup --name "Salah"
-python -m CODE.src.api.lookup --club "Arsenal"
-
-5️⃣ Phân tích thống kê
-python -m CODE.src.analysis.team_stats
-
-6️⃣ Định giá cầu thủ
-python -m CODE.src.analysis.pretend_valuation
-
-7️⃣ KMeans & PCA
-python -m CODE.src.analysis.kmeans_clustering
-python -m CODE.src.analysis.pca_visualization
+2) Chạy tuần tự:
+1. Crawl FBref stats
+2. Crawl transfer values
+3. Chạy Flask API
+4. lookup.py để tra cứu
+5. stats_analysis để tính thống kê
+6. pretend_valuation để định giá cầu thủ
+7. clustering_kmeans để phân cụm
+8. pca_visualization để vẽ biểu đồ PCA
 
 📤 Hướng dẫn nộp bài
 
-Mỗi nhóm tối đa 3 thành viên
+Tối đa 3 thành viên / nhóm
 
-Nộp mã nguồn + báo cáo PDF
+Nộp source code + báo cáo PDF
 
-Repo GitHub để private
+Tạo GitHub repo: private
 
 Add giảng viên: bachknk49@gmail.com
 
-Cấu trúc repo:
+Repo gồm:
 
-/REPORT   → chứa báo cáo PDF
-/CODE     → chứa toàn bộ source code
+/Báo cáo      → file PDF
+/CODE         → toàn bộ code
+
+
+Deadline: 23:59 – Chủ Nhật, 16/11/2025
 
 🎯 Kết luận
 
-Dự án đã hoàn thiện đầy đủ:
+Dự án hoàn thiện đầy đủ yêu cầu BTL:
 
-Thu thập dữ liệu EPL
+✔ Crawl dữ liệu tự động
 
-Lưu trữ & xây dựng API
+✔ Lưu trữ SQLite
 
-Công cụ tra cứu terminal
+✔ Xây dựng API
 
-Phân tích thống kê
+✔ Tool tra cứu CLI
 
-Định giá bằng học máy
+✔ Phân tích thống kê
 
-Phân cụm KMeans và PCA
+✔ Dự đoán giá trị cầu thủ bằng ML
 
-Hệ thống được xây dựng module hoá, chạy tự động, phục vụ đầy đủ yêu cầu bài tập lớn.
+✔ Phân cụm KMeans
+
+✔ PCA visualization
+
+Hệ thống hoạt động hoàn chỉnh, có thể chạy demo trực tiếp trên lớp.
