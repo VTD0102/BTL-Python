@@ -14,7 +14,7 @@ conn = sqlite3.connect("data/stats.db")
 df = pd.read_sql_query("SELECT * FROM PLAYER_STATS", conn)
 conn.close()
 
-print(f"✅ Đã đọc {len(df)} cầu thủ, {len(df.columns)} cột dữ liệu.\n")
+print(f" Đã đọc {len(df)} cầu thủ, {len(df.columns)} cột dữ liệu.\n")
 
 # 2️ Tiền xử lý dữ liệu
 # Loại bỏ các cột không dùng cho phân cụm   
