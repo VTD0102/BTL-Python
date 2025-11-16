@@ -109,7 +109,7 @@ def scrape_value_for_player_list(players: list, delay: float = 1.0):
             value = get_transfer_value(driver, name)
             if not value or value.strip() == "":
                 value = "NA"
-            print(f"  {name} → {value}")
+            print(f"{name} → {value}")
             collected.append({
                 "player_name": name,
                 "transfer_value": value
