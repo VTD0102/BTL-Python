@@ -169,7 +169,7 @@ Vẽ 3D interactive (Plotly)
 Chạy:
 python -m CODE.src.analysis.pca_visualization
 
-🚀 Hướng dẫn cài đặt
+Hướng dẫn cài đặt
 1) Tạo môi trường
 pip install -r requirements.txt
 
@@ -183,7 +183,7 @@ pip install -r requirements.txt
 7. clustering_kmeans để phân cụm
 8. pca_visualization để vẽ biểu đồ PCA
 
-📤 Hướng dẫn nộp bài
+Hướng dẫn nộp bài
 
 Tối đa 3 thành viên / nhóm
 
@@ -201,7 +201,7 @@ Repo gồm:
 
 Deadline: 23:59 – Chủ Nhật, 16/11/2025
 
-🎯 Kết luận
+Kết luận
 
 Dự án hoàn thiện đầy đủ yêu cầu BTL:
 
