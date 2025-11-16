@@ -10,9 +10,6 @@ app = Flask(__name__)
 # 2 Hàm tiện ích
 # ==============================
 def query_db(query, params=()):
-    """
-    Thực hiện truy vấn SQL và trả kết quả dạng list[dict]
-    """
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
