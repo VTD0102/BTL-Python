@@ -1,20 +1,27 @@
 import sqlite3
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
+import plotly.express as px
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
+from mpl_toolkits.mplot3d import Axes3D
 import warnings
-
 warnings.filterwarnings("ignore")
-# 1️ Đọc dữ liệu
+import os
+# 1 Đọc dữ liệu
 print(" Đang tải dữ liệu từ cơ sở dữ liệu SQLite...")
 
-conn = sqlite3.connect("CODE/data/stats.db")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DB_PATH = os.path.join(BASE_DIR, "data", "stats.db")
+conn = sqlite3.connect(DB_PATH)
 df = pd.read_sql_query("SELECT * FROM PLAYER_STATS", conn)
 conn.close()
 
-print(f" Đã đọc {len(df)} cầu thủ, {len(df.columns)} cột dữ liệu.\n")
+print(f"Đã đọc {len(df)} cầu thủ, {len(df.columns)} cột dữ liệu.\n")
 
 # 2️ Tiền xử lý dữ liệu
 # Loại bỏ các cột không dùng cho phân cụm
@@ -25,7 +32,7 @@ drop_cols = [    'Player', 'Squad', 'Nation', 'Pos', 'Born', 'Matches',
     '2CrdY', 'FK', 'CK', 'OG', 'Err',
 
 #loại bỏ các cột thể hiện các chỉ số phụ thuộc vào thời gian ra sân
-    'Gls', 'Ast', 'G+A', 'G-PK', 'xG','npxG', 'xAG', 'npxG+xAG' ,
+    'Gls', 'Ast', 'G+A', 'G-PK', 'xG','npxG', 'xAG', 'npxG+xAG' 
     'GA', 'SoTA', 'Saves', 'CS', 'PSxG', 
     'Sh', 'SoT', 'TotDist', 'PrgDist', 'SCA', 'GCA', 'Tkl', 'Touches'
     ]
@@ -41,7 +48,7 @@ numeric_df = numeric_df.apply(pd.to_numeric, errors='coerce')
 
 # Điền toàn bộ giá trị N/A bằng 0
 numeric_df = numeric_df.fillna(0)
-print(" Đã thay toàn bộ giá trị N/A bằng 0.\n")
+print("Đã thay toàn bộ giá trị N/A bằng 0.\n")
 
 # 3 Chuẩn hóa dữ liệu
 scaler = StandardScaler()
@@ -49,7 +56,7 @@ X_scaled = scaler.fit_transform(numeric_df)
 
 print(f" Dữ liệu đã được chuẩn hóa (StandardScaler). Tổng số đặc trưng: {X_scaled.shape[1]}\n")
 
-# 4️ Tìm số cụm tối ưu (Elbow & Silhouette)
+# 4 Tìm số cụm tối ưu (Elbow & Silhouette)
 
 print(" Đang tìm số cụm tối ưu...")
 

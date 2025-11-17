@@ -4,11 +4,12 @@ import pandas as pd
 import os
 
 API_URL = "http://127.0.0.1:5000"
-RESULT_DIR = os.path.join("data", "lookup_results")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+RESULT_DIR = os.path.join(BASE_DIR, "data", "lookup_results")
 os.makedirs(RESULT_DIR, exist_ok=True)
 
 def lookup_player(name):
-    print(f" Tra cứu cầu thủ: {name}")
+    print(f"Tra cứu cầu thủ: {name}")
     url = f"{API_URL}/player?name={name}"
     r = requests.get(url)
     if r.status_code != 200:
