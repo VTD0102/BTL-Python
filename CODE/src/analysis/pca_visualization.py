@@ -10,7 +10,7 @@ from sklearn.decomposition import PCA
 # 1️ Đọc dữ liệu
 print("Đang tải dữ liệu từ cơ sở dữ liệu SQLite...")
 
-conn = sqlite3.connect("data/stats.db")
+conn = sqlite3.connect("CODE/data/stats.db")
 df = pd.read_sql_query("SELECT * FROM PLAYER_STATS", conn)
 conn.close()
 
@@ -85,7 +85,7 @@ fig.show()
 output_cols = ['Player', 'Squad', 'Nation', 'Pos', 'Age', 'Cluster']
 existing_cols = [c for c in output_cols if c in df.columns]
 
-df[existing_cols].to_csv("data/data_clusters.csv", index=False, encoding="utf-8-sig")
+df[existing_cols].to_csv("CODE/data/data_clusters.csv", index=False, encoding="utf-8-sig")
 
 print("\n ĐÃ LƯU THÀNH CÔNG → data_clusters.csv")
 print("   Bao gồm:", ", ".join(existing_cols))

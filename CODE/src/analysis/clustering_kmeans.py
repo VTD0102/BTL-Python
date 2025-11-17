@@ -10,7 +10,7 @@ warnings.filterwarnings("ignore")
 # 1️ Đọc dữ liệu
 print(" Đang tải dữ liệu từ cơ sở dữ liệu SQLite...")
 
-conn = sqlite3.connect("data/stats.db")
+conn = sqlite3.connect("CODE/data/stats.db")
 df = pd.read_sql_query("SELECT * FROM PLAYER_STATS", conn)
 conn.close()
 

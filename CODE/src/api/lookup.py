@@ -8,7 +8,7 @@ RESULT_DIR = os.path.join("data", "lookup_results")
 os.makedirs(RESULT_DIR, exist_ok=True)
 
 def lookup_player(name):
-    print(f"🔍 Tra cứu cầu thủ: {name}")
+    print(f" Tra cứu cầu thủ: {name}")
     url = f"{API_URL}/player?name={name}"
     r = requests.get(url)
     if r.status_code != 200:
