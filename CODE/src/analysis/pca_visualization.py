@@ -1,15 +1,11 @@
 import sqlite3
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import os
-import seaborn as sns
 import plotly.express as px
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from sklearn.metrics import silhouette_score
-from mpl_toolkits.mplot3d import Axes3D
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -88,13 +84,5 @@ fig = px.scatter_3d(
 fig.update_traces(marker=dict(size=4))
 fig.show()
 
-# 7 Xuất file kết quả
 
-output_cols = ['Player', 'Squad', 'Nation', 'Pos', 'Age', 'Cluster']
-existing_cols = [c for c in output_cols if c in df.columns]
-
-df[existing_cols].to_csv("data/data_clusters.csv", index=False, encoding="utf-8-sig")
-
-print("\nĐÃ LƯU THÀNH CÔNG → clusters.csv")
-print("   Bao gồm:", ", ".join(existing_cols))
 
