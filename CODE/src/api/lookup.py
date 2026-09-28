@@ -34,7 +34,7 @@ def lookup_club(club):
         return
     data = r.json()
     if not data:
-        print(f" Không tìm thấy CLB {club}")
+        print(f"Không tìm thấy CLB {club}")
         return
     df = pd.DataFrame(data)
     output = os.path.join(RESULT_DIR, f"{club.replace(' ', '_')}_lookup.csv")
